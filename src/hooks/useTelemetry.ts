@@ -11,6 +11,7 @@ export function useTelemetry() {
     queryFn: () => telemetryService.getLatestReading(activeRobotId),
     refetchInterval: 5000,
     staleTime: 2000,
+    retry: 1,
   });
 
   // Poll robot status every 5 seconds
@@ -19,6 +20,7 @@ export function useTelemetry() {
     queryFn: () => telemetryService.getRobotStatus(activeRobotId),
     refetchInterval: 5000,
     staleTime: 2000,
+    retry: 1,
   });
 
   return {

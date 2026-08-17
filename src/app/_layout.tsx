@@ -1,30 +1,69 @@
-import { Stack, ThemeProvider, DefaultTheme } from 'expo-router';
+import '../global.css';
+import { Stack, ThemeProvider, DarkTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '../components/core/ToastConfig';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useEffect(() => {
-    // Basic setup if needed
+    // Hide splash screen when ready
+    SplashScreen.hideAsync();
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={DefaultTheme}>
-        <AnimatedSplashOverlay />
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="settings" options={{ presentation: 'modal', title: 'Settings' }} />
-          <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={DarkTheme}>
+          <Stack
+            screenOptions={{
+              headerStyle: {
+                backgroundColor: '#151F32',
+              },
+              headerTintColor: '#F8FAFC',
+              contentStyle: {
+                backgroundColor: '#0B111E',
+              },
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="(modals)/waypoint-setup"
+              options={{
+                presentation: 'modal',
+                title: 'Waypoint Mission Setup',
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="settings"
+              options={{
+                presentation: 'modal',
+                title: 'Settings & Config',
+                headerStyle: { backgroundColor: '#151F32' },
+                headerTintColor: '#F8FAFC',
+              }}
+            />
+            <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
+          </Stack>
+          <StatusBar style="light" />
+        </ThemeProvider>
+      </QueryClientProvider>
+      <Toast config={toastConfig} />
+    </SafeAreaProvider>
   );
 }

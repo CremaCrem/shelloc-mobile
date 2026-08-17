@@ -12,4 +12,12 @@ export const telemetryService = {
     const { data } = await apiClient.get<RobotStatus>(`/robot-status/${robotId}`);
     return data;
   },
+
+  dispatchRobot: async (robotId: string, waypointId: string): Promise<RobotStatus> => {
+    const { data } = await apiClient.patch<RobotStatus>(`/robot-status/${robotId}`, {
+      target_waypoint_id: waypointId,
+      is_active: true,
+    });
+    return data;
+  },
 };
