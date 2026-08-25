@@ -45,10 +45,10 @@ export default function DashboardScreen() {
       : 'cleaning'
     : 'idle';
 
-  const battery = statusData?.battery_percent ?? statusData?.battery_level ?? 86;
-  const pointsTreated = statusData?.points_treated_today ?? 4;
+  const battery = statusData?.battery_percent ?? statusData?.battery_level ?? (connectionState === 'connected' ? 86 : '--');
+  const pointsTreated = statusData?.points_treated_today ?? (connectionState === 'connected' ? 4 : '--');
   const totalWaypoints = 6;
-  const pointsProgress = pointsTreated / totalWaypoints;
+  const pointsProgress = pointsTreated === '--' ? 0 : (pointsTreated as number) / totalWaypoints;
 
   const toggleMode = () => {
     setOperationMode((prev) => (prev === 'autonomous' ? 'manual' : 'autonomous'));

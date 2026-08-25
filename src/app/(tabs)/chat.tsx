@@ -68,6 +68,13 @@ export default function ChatScreen() {
             <View className="flex-1 items-center justify-center py-20">
               <ActivityIndicator color="#00F2FE" />
             </View>
+          ) : isError ? (
+            <View className="flex-1 items-center justify-center py-20">
+              <Bot size={48} color="#EF4444" className="mb-4 opacity-70" />
+              <Typography variant="body" color="danger" className="text-center px-8">
+                Unable to load chat history. Please check your connection and try again.
+              </Typography>
+            </View>
           ) : messages.length === 0 ? (
             <View className="flex-1 items-center justify-center py-20">
               <Bot size={48} color="#1A253A" className="mb-4" />

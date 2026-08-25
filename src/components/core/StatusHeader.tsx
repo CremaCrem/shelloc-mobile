@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Bot, Wifi, WifiOff, Battery, BatteryCharging, Radio } from 'lucide-react-native';
+import { Bot, Wifi, WifiOff, Battery, Radio } from 'lucide-react-native';
 import { Typography } from './Typography';
 import { Badge, type BadgeStatus } from './Badge';
 
@@ -12,7 +12,7 @@ interface StatusHeaderProps {
   connection: ConnectionStatus;
   state?: RobotState;
   operationMode?: 'autonomous' | 'manual';
-  batteryPercent?: number;
+  batteryPercent?: number | string;
   gpsSignal?: 'good' | 'weak' | 'none';
 }
 
@@ -52,9 +52,11 @@ export function StatusHeader({
   }
 
   const batteryColor =
-    batteryPercent > 50
+    typeof batteryPercent === 'string' || isNaN(Number(batteryPercent))
+      ? '#64748B'
+      : Number(batteryPercent) > 50
       ? '#10B981'
-      : batteryPercent > 20
+      : Number(batteryPercent) > 20
       ? '#F59E0B'
       : '#EF4444';
 
@@ -113,7 +115,7 @@ export function StatusHeader({
           <View className="flex-row items-center bg-surfaceElevated border border-surfaceBorder px-2.5 py-1.5 rounded-xl mr-2">
             <Battery size={16} color={batteryColor} />
             <Typography variant="caption" color="ink" className="ml-1 font-semibold">
-              {batteryPercent}%
+              {batteryPercent}{typeof batteryPercent === 'number' ? '%' : ''}
             </Typography>
           </View>
 

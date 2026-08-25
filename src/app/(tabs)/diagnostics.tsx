@@ -6,6 +6,7 @@ import {
   RefreshControl,
   Dimensions,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -374,7 +375,7 @@ export default function DiagnosticsScreen() {
               onPress={() => {
                 if (selectedWaypoint) {
                   dispatchRobot.mutate(selectedWaypoint.id, {
-                    onSuccess: () => alert(`Dispatched SHELLOC vessel to Point ${selectedWaypoint.point_number}`)
+                    onSuccess: () => Alert.alert('Success', `Dispatched SHELLOC vessel to Point ${selectedWaypoint.point_number}`)
                   });
                 }
               }}
