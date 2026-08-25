@@ -17,7 +17,7 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   activeRobotId: 'SHELLOC-01',
   setActiveRobotId: (id: string) => set({ activeRobotId: id }),
-  apiBaseUrl: 'http://localhost:8000/api',
+  apiBaseUrl: process.env.EXPO_PUBLIC_API_URL || 'https://shelloc-backend.onrender.com/api',
   setApiBaseUrl: (url: string) => set({ apiBaseUrl: url }),
   isDemoMode: false,
   setIsDemoMode: (isDemo: boolean) => set({ isDemoMode: isDemo }),

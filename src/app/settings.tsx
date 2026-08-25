@@ -82,7 +82,7 @@ export default function SettingsScreen() {
                   value={tempUrl}
                   onChangeText={setTempUrl}
                   className="text-ink font-mono text-[13px]"
-                  placeholder="http://localhost:8000/api"
+                  placeholder="https://shelloc-backend.onrender.com/api"
                   placeholderTextColor="#475569"
                   autoCapitalize="none"
                   autoCorrect={false}

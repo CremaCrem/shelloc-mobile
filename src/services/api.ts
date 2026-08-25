@@ -2,8 +2,8 @@ import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import { useAppStore } from '../store/useAppStore';
 
-// Default base URL for simulator / local backend
-export const API_BASE_URL = 'http://localhost:8000/api';
+// Default base URL for production Render backend or local override via EXPO_PUBLIC_API_URL
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://shelloc-backend.onrender.com/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
