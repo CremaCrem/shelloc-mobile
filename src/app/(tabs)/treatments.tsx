@@ -28,7 +28,7 @@ export default function TreatmentsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Screen Title Bar */}
       <View className="flex-row items-center px-6 py-3.5 bg-surface border-b border-surfaceBorder">
         <View className="p-2 rounded-xl bg-brandMuted border border-brand/30 mr-3">

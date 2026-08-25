@@ -67,7 +67,7 @@ export default function DiagnosticsScreen() {
   const doData = getComparativeData('dissolved_oxygen', 3.8);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Screen Title Bar */}
       <View className="flex-row items-center justify-between px-6 py-3.5 bg-surface border-b border-surfaceBorder">
         <View className="flex-row items-center">

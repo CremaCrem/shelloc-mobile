@@ -62,13 +62,13 @@ export function StatusHeader({
     <View className="px-6 py-4 bg-surface border-b border-surfaceBorder">
       <View className="flex-row items-center justify-between">
         {/* Left: Robot identity */}
-        <View className="flex-row items-center space-x-3">
-          <View className="bg-surfaceElevated border border-surfaceBorder p-2.5 rounded-2xl mr-3">
+        <View className="flex-row items-center flex-1 mr-2">
+          <View className="bg-surfaceElevated border border-surfaceBorder p-2.5 rounded-2xl mr-3 flex-shrink-0">
             <Bot size={22} color="#00F2FE" />
           </View>
-          <View>
-            <View className="flex-row items-center gap-2">
-              <Typography variant="h3" color="ink" className="mr-2">
+          <View className="flex-shrink">
+            <View className="flex-row items-center flex-wrap gap-2">
+              <Typography variant="h3" color="ink" className="mr-1 flex-shrink">
                 {robotName}
               </Typography>
               <Badge
@@ -108,7 +108,7 @@ export function StatusHeader({
         </View>
 
         {/* Right: Quick telemetry pills */}
-        <View className="flex-row items-center space-x-2">
+        <View className="flex-row items-center space-x-2 flex-shrink-0">
           {/* Battery Chip */}
           <View className="flex-row items-center bg-surfaceElevated border border-surfaceBorder px-2.5 py-1.5 rounded-xl mr-2">
             <Battery size={16} color={batteryColor} />

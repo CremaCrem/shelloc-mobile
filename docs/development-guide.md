@@ -70,3 +70,24 @@ The project utilizes three distinct build profiles:
 When you are ready to ship to TestFlight or the App Store (requires the $99 Apple Developer Program):
 - Run `eas submit -p ios`
 - EAS will take your latest cloud build and automatically upload it to Apple App Store Connect, bypassing the need to ever open Xcode to submit an archive.
+
+## 4. Cross-Platform Compatibility (iOS & Android)
+
+SHELLOC Mobile is a cross-platform React Native application. When developing new features, always ensure they are fully compatible across both iOS and Android.
+
+### Critical Considerations for Android
+1. **Network & Cleartext Traffic:**
+   - **Localhost:** On the iOS Simulator, `http://localhost:8000` points to the Mac host. On the Android Emulator, `localhost` points to the Android device itself. You must use `http://10.0.2.2:8000` to reach the Mac host from the Android Emulator. Physical devices (both iOS and Android) require the Mac's LAN IP (e.g. `http://192.168.1.x:8000`).
+   - **Cleartext Traffic:** Android 9+ blocks unencrypted HTTP traffic by default. We have configured `"usesCleartextTraffic": true` in `app.json` to allow local HTTP testing. Production APIs must always use HTTPS.
+2. **Navigation & Safe Areas:**
+   - **System Navigation Bar:** Android devices often use a 3-button navigation bar at the bottom of the screen. Avoid hardcoding fixed heights for bottom tab bars. Always use dynamic insets (e.g., `useSafeAreaInsets().bottom`) to prevent UI overlap with the navigation buttons.
+   - **Double Padding:** When wrapping tab screens in `<SafeAreaView>`, always specify `edges={['top']}`. Otherwise, you will generate "double bottom padding" because the bottom tab navigator already accounts for the bottom safe area.
+3. **Google Maps API Key:**
+   - While `react-native-maps` uses Apple Maps on iOS out-of-the-box, it requires Google Play Services on Android.
+   - For standalone Android builds (APK/AAB), you **must** configure a valid Google Maps API Key in `app.json` under `android.config.googleMaps.apiKey`. Without this, the map will render as a blank grid or crash.
+4. **Keyboard Handling:**
+   - Android natively handles keyboard resizing (`windowSoftInputMode="adjustResize"`). iOS does not.
+   - Use `<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>` to ensure uniform cross-platform behavior. Do not apply `behavior="padding"` unconditionally, as it will cause double-height visual glitches on Android.
+5. **Text & Flexbox Wrapping:**
+   - Be mindful of narrow Android screens (e.g., 360dp width). Always utilize `flex-shrink` within tight rows (like `StatusHeader`) to prevent text and badges from being clipped or pushed off-screen.
+   - `numberOfLines={1}` and `adjustsFontSizeToFit={true}` should be used on metric badges to allow them to scale down gracefully.

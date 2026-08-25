@@ -55,7 +55,7 @@ export default function DashboardScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Top App Header */}
       <View className="flex-row items-center justify-between px-6 py-3.5 bg-surface border-b border-surfaceBorder">
         <View className="flex-row items-center space-x-2">
