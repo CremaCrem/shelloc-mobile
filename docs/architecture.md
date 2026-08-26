@@ -45,11 +45,11 @@ src/
 │   ├── (tabs)/           # Main bottom tab navigation
 │   ├── (modals)/         # Full-screen or sheet modals
 │   ├── _layout.tsx       # Root layout & providers
+│   ├── +not-found.tsx    # Fallback route for unmatched paths
 │   └── settings.tsx      # Root stack routes
 ├── components/           # Reusable UI components
 │   ├── core/             # Design system components (Button, Card, Typography)
-│   ├── domain/           # Feature-specific components (StatCard, HeatmapView)
-│   └── layout/           # Screen wrappers, safe area containers
+│   └── domain/           # Feature-specific components (StatCard, HeatmapView)
 ├── constants/            # Configuration and static data
 │   ├── theme.ts          # NativeWind/Tailwind theme overrides/exports
 │   └── config.ts         # Environment variables & API URLs

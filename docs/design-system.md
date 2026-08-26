@@ -139,6 +139,7 @@ The app utilizes a clean, geometric sans-serif font family (**Inter** / **Plus J
 ```text
 src/app/
 ├── _layout.tsx                 # Root layout, React Query provider & ThemeProvider
+├── +not-found.tsx              # Fallback route for unmatched paths
 ├── settings.tsx                # Settings: App and robot configuration
 ├── (tabs)/
 │   ├── _layout.tsx             # Bottom tab bar with cyan active icons & dark bar

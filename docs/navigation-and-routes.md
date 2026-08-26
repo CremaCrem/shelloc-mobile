@@ -50,6 +50,6 @@ In `app.json`, the app's scheme is defined:
 ```
 
 ### Critical Telemetry Alert Route Mappings
-- `shelloc://index?alert=critical_turbidity` -> Opens dashboard and focuses on the Turbidity StatCard alert.
+- `shelloc://diagnostics?alert=critical_turbidity` -> Opens the diagnostics screen and focuses on the Turbidity StatCard alert.
 - `shelloc://map?waypoint_id={id}` -> Opens the Map tab, highlighting the waypoint where a critical sensor threshold was reached.
 - `shelloc://chat?context=alert` -> Launches the AI chat pre-populated with a request to explain the recent telemetry alert in plain language.
