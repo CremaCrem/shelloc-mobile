@@ -139,10 +139,10 @@ The app utilizes a clean, geometric sans-serif font family (**Inter** / **Plus J
 ```text
 src/app/
 ├── _layout.tsx                 # Root layout, React Query provider & ThemeProvider
+├── settings.tsx                # Settings: App and robot configuration
 ├── (tabs)/
 │   ├── _layout.tsx             # Bottom tab bar with cyan active icons & dark bar
-│   ├── index.tsx               # Entry point (redirects/renders Dashboard)
-│   ├── dashboard.tsx           # Home Dashboard: 2-column Bento Grid (About, Operation, Points Today, etc.)
+│   ├── index.tsx               # Home Dashboard: 2-column Bento Grid (About, Operation, Points Today, etc.)
 │   ├── diagnostics.tsx         # Diagnostics Screen: Map + Status Legend + Comparative Point 1 Data
 │   ├── map.tsx                 # GPS Map View & Heatmaps
 │   ├── treatments.tsx          # Treatment History & Event Logs
@@ -159,3 +159,64 @@ src/app/
 - **Tactile Feedback:** Every pressable component (Card, Button, List Item) scales slightly (`0.96–0.98`) with spring physics (`damping: 15, stiffness: 300`).
 - **Live Telemetry Transitions:** Metric numbers and progress indicators transition smoothly upon new poll payloads.
 - **Layout Transitions:** Layout changes (e.g. waypoint deletion) use animated entering/exiting transitions.
+
+---
+
+## 8. NativeWind v4 Styling Rules
+
+The project uses **NativeWind v4** (`react-native-css-interop`) as the Tailwind CSS engine. It transforms `className` props at runtime via a JSX wrapper. There is one critical constraint to be aware of:
+
+### ⚠️ Never Use Opacity Modifiers in Dynamic `className` Expressions
+
+Tailwind's **opacity modifier syntax** (`/n`) on shadow and color utilities — e.g., `shadow-brand/40`, `bg-black/50`, `border-danger/30` — triggers an **async CSS parsing path** inside `react-native-css-interop`. When these classes appear inside a **dynamic `className` expression** (a template literal or ternary that changes at runtime), the async path races against the navigation context initialization, causing a crash:
+
+```
+Error: Couldn't find a navigation context. Have you wrapped your app with 'NavigationContainer'?
+```
+
+This error is misleading — the app *is* correctly wrapped. The root cause is NativeWind's CSS interop accessing stale context before React Navigation's `NavigationStateContext` has been populated.
+
+**Affected class families:**
+- `shadow-<color>/<opacity>` (e.g., `shadow-brand/40`, `shadow-black/50`)
+- `bg-<color>/<opacity>` (e.g., `bg-surface/90`, `bg-white/5`)
+- `border-<color>/<opacity>` (e.g., `border-brand/30`)
+- `opacity-<value>` as a **standalone dynamic class** (e.g., `${condition ? 'opacity-70' : ''}`)
+
+**The Rule:** If the class string containing an opacity modifier can **change between renders** (i.e., it is inside a ternary or template literal that depends on state/props), move the opacity-dependent part out of `className` and into an inline `style` prop instead.
+
+#### ✅ Correct Pattern
+
+```tsx
+// Shadow with opacity → inline style
+<Pressable
+  className={`rounded-full ${isActive ? 'bg-brand' : 'bg-surfaceElevated'}`}
+  style={isActive ? {
+    shadowColor: '#00F2FE',
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  } : undefined}
+/>
+
+// Dynamic opacity → inline style
+<Typography
+  className="text-[10px] mt-2"
+  style={isUser ? { opacity: 0.7 } : undefined}
+/>
+```
+
+#### ❌ Incorrect Pattern (crashes with NavigationStateContext error)
+
+```tsx
+// Opacity modifier inside a dynamic className expression
+<Pressable
+  className={`rounded-full ${
+    isActive ? 'bg-brand shadow-md shadow-brand/40' : 'bg-surfaceElevated'
+  }`}
+/>
+
+// Dynamic opacity-* class
+<Typography className={`text-[10px] ${isUser ? 'opacity-70' : ''}`} />
+```
+
+**Static** opacity modifiers (always-on, not inside a ternary) on `<View>` components are generally safe, though inline styles are still preferred for robustness.

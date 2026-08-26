@@ -45,7 +45,7 @@ src/
 │   ├── (tabs)/           # Main bottom tab navigation
 │   ├── (modals)/         # Full-screen or sheet modals
 │   ├── _layout.tsx       # Root layout & providers
-│   └── index.tsx         # Initial route / Auth gate
+│   └── settings.tsx      # Root stack routes
 ├── components/           # Reusable UI components
 │   ├── core/             # Design system components (Button, Card, Typography)
 │   ├── domain/           # Feature-specific components (StatCard, HeatmapView)

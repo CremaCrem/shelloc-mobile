@@ -208,7 +208,7 @@ export default function DashboardScreen() {
               </View>
 
               <Typography variant="caption" color="inkSubtle" className="text-center mt-1">
-                {totalWaypoints - pointsTreated} waypoints remaining
+                {typeof pointsTreated === 'number' ? totalWaypoints - pointsTreated : '--'} waypoints remaining
               </Typography>
             </Card>
           </View>

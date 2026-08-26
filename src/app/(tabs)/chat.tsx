@@ -96,11 +96,20 @@ export default function ChatScreen() {
                     </View>
                   )}
                   
-                  <View className={`max-w-[80%] rounded-2xl p-4 ${
-                    isUser 
-                      ? 'bg-brand rounded-tr-sm shadow-sm shadow-brand/30' 
-                      : 'bg-surfaceElevated border border-surfaceBorder rounded-tl-sm'
-                  }`}>
+                  <View
+                    className={`max-w-[80%] rounded-2xl p-4 ${
+                      isUser 
+                        ? 'bg-brand rounded-tr-sm' 
+                        : 'bg-surfaceElevated border border-surfaceBorder rounded-tl-sm'
+                    }`}
+                    style={isUser ? {
+                      shadowColor: '#00F2FE',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    } : undefined}
+                  >
                     <Typography 
                       variant="body" 
                       color={isUser ? 'dark' : 'ink'} 
@@ -111,7 +120,8 @@ export default function ChatScreen() {
                     <Typography 
                       variant="caption" 
                       color={isUser ? 'dark' : 'inkSubtle'} 
-                      className={`text-[10px] mt-2 text-right ${isUser ? 'opacity-70' : ''}`}
+                      className="text-[10px] mt-2 text-right"
+                      style={isUser ? { opacity: 0.7 } : undefined}
                     >
                       {formatTime(msg.timestamp)}
                     </Typography>
@@ -158,9 +168,16 @@ export default function ChatScreen() {
             disabled={!inputText.trim() || sendMessageMutation.isPending}
             className={`w-12 h-12 rounded-full items-center justify-center ${
               inputText.trim() && !sendMessageMutation.isPending 
-                ? 'bg-brand shadow-md shadow-brand/40' 
+                ? 'bg-brand' 
                 : 'bg-surfaceElevated border border-surfaceBorder'
             }`}
+            style={inputText.trim() && !sendMessageMutation.isPending ? {
+              shadowColor: '#00F2FE',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 4,
+            } : undefined}
           >
             <Send 
               size={18} 
