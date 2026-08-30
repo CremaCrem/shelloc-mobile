@@ -8,6 +8,7 @@ export function useWaypoints() {
   return useQuery({
     queryKey: ['waypoints', activeRobotId],
     queryFn: () => waypointService.getWaypoints(activeRobotId),
+    refetchInterval: 5000,
   });
 }
 

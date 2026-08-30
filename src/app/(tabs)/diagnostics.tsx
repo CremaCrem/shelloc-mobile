@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
+  Text,
   ScrollView,
   Pressable,
   RefreshControl,
   Dimensions,
   StyleSheet,
-  Alert,
+  Modal,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import MapView, { Marker, Circle } from 'react-native-maps';
@@ -46,6 +48,19 @@ export default function DiagnosticsScreen() {
   const waypoints = waypointsData || [];
   const [selectedPointIndex, setSelectedPointIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const prevMissionState = useRef(statusData?.mission_state);
+
+  useEffect(() => {
+    if (
+      prevMissionState.current &&
+      prevMissionState.current !== 'completed' &&
+      statusData?.mission_state === 'completed'
+    ) {
+      setShowSuccessModal(true);
+    }
+    prevMissionState.current = statusData?.mission_state;
+  }, [statusData?.mission_state]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -101,13 +116,57 @@ export default function DiagnosticsScreen() {
       <StatusHeader
         robotName={statusData?.robot_id || 'SHELLOC-01'}
         connection={isError ? 'disconnected' : isLoading ? 'connecting' : 'connected'}
-        state={statusData?.is_active ? 'cleaning' : 'idle'}
+        state={(statusData?.mission_state && statusData.mission_state !== 'idle') ? 'cleaning' : 'idle'}
         operationMode="autonomous"
         batteryPercent={statusData?.battery_percent ?? 86}
         gpsSignal="good"
       />
 
+      {/* Active Mission Banner */}
+      {statusData?.mission_state && statusData.mission_state !== 'idle' && (
+        <View className="px-6 py-3 bg-brand/10 border-b border-brand/30 flex-row items-center">
+          <View className="w-2.5 h-2.5 rounded-full bg-brand mr-3" style={{ shadowColor: '#00F2FE', shadowOpacity: 0.8, shadowRadius: 6, elevation: 4 }} />
+          <View className="flex-1">
+            <Typography variant="caption" color="brand" className="uppercase font-semibold tracking-widest text-[9px] mb-0.5" style={{ opacity: 0.8 }}>
+              Active Mission Phase
+            </Typography>
+            <Typography variant="label" color="brand" className="font-bold">
+              {statusData.mission_state.replace(/_/g, ' ').toUpperCase()}
+            </Typography>
+          </View>
+        </View>
+      )}
+
       <BuoyancyAlert isVisible={statusData?.overall_status === 'buoyancy_failsafe' || statusData?.buoyancy_failsafe_active === true} />
+
+      {/* Mission Complete Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(11, 17, 30, 0.9)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <View className="items-center justify-center mb-6">
+            <View className="w-24 h-24 rounded-full bg-leafMuted items-center justify-center mb-4" style={{ borderColor: 'rgba(16, 185, 129, 0.4)', borderWidth: 1 }}>
+              <CheckCircle2 size={48} color="#10B981" />
+            </View>
+            <Typography variant="h1" color="ink" className="font-bold text-center mb-2">
+              Remediation Successful
+            </Typography>
+            <Typography variant="body" color="inkMuted" className="text-center px-4">
+              The autonomous vessel has successfully neutralized the designated target zone.
+            </Typography>
+          </View>
+          <View style={{ width: '100%', maxWidth: 280 }}>
+            <Button
+              label="Acknowledge"
+              variant="primary"
+              size="large"
+              onPress={() => setShowSuccessModal(false)}
+            />
+          </View>
+        </View>
+      </Modal>
 
       <ScrollView
         className="flex-1"
@@ -120,10 +179,10 @@ export default function DiagnosticsScreen() {
           {/* 1. Map Overview with Numbered Waypoints */}
           <Card className="p-0 overflow-hidden border border-surfaceBorder bg-surface">
             {/* Map Header Overlay */}
-            <View className="p-4 bg-surface/90 border-b border-surfaceBorder flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <Radio size={16} color="#00F2FE" className="mr-2" />
-                <Typography variant="h3" color="ink" className="text-base font-semibold">
+            <View className="p-4 bg-surface/90 border-b border-surfaceBorder flex-row items-center justify-between flex-wrap gap-2">
+              <View className="flex-row items-center flex-1 pr-2">
+                <Radio size={16} color="#00F2FE" className="mr-2 flex-shrink-0" />
+                <Typography variant="h3" color="ink" className="text-base font-semibold flex-shrink" numberOfLines={1}>
                   Autonomous Waypoint Radar
                 </Typography>
               </View>
@@ -164,20 +223,27 @@ export default function DiagnosticsScreen() {
                         onPress={() => setSelectedPointIndex(idx)}
                         anchor={{ x: 0.5, y: 0.5 }}
                       >
-                        <View className={`w-8 h-8 rounded-full items-center justify-center border ${
-                          isSelected
-                            ? 'bg-brand border-brand shadow-lg shadow-brand'
-                            : isTreated
-                            ? 'bg-leafMuted border-leaf'
-                            : 'bg-surfaceElevated border-amber/60'
-                        }`}>
-                          <Typography
-                            variant="caption"
-                            color={isSelected ? 'dark' : isTreated ? 'leaf' : 'amber'}
-                            className="font-bold text-[11px]"
-                          >
+                        <View style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1,
+                          backgroundColor: isSelected ? '#00F2FE' : isTreated ? 'rgba(16, 185, 129, 0.2)' : '#1E293B',
+                          borderColor: isSelected ? '#00F2FE' : isTreated ? '#10B981' : 'rgba(245, 158, 11, 0.6)',
+                          shadowColor: isSelected ? '#00F2FE' : 'transparent',
+                          shadowOpacity: isSelected ? 0.5 : 0,
+                          shadowRadius: 5,
+                          elevation: isSelected ? 5 : 0
+                        }}>
+                          <Text style={{
+                            fontWeight: 'bold',
+                            fontSize: 11,
+                            color: isSelected ? '#0B111E' : isTreated ? '#10B981' : '#F59E0B'
+                          }}>
                             P{wp.point_number}
-                          </Typography>
+                          </Text>
                         </View>
                       </Marker>
                     </React.Fragment>
@@ -193,9 +259,28 @@ export default function DiagnosticsScreen() {
                   anchor={{ x: 0.5, y: 0.5 }}
                   zIndex={10}
                 >
-                  <View className="items-center justify-center">
-                    <View className="w-8 h-8 rounded-full bg-brand/20 border border-brand animate-ping absolute" />
-                    <View className="w-6 h-6 rounded-full bg-brand items-center justify-center shadow-md shadow-brand">
+                  <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: 'rgba(0, 242, 254, 0.2)',
+                      borderColor: '#00F2FE',
+                      borderWidth: 1,
+                      position: 'absolute'
+                    }} />
+                    <View style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: '#00F2FE',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: '#00F2FE',
+                      shadowOpacity: 0.5,
+                      shadowRadius: 4,
+                      elevation: 4
+                    }}>
                       <Navigation size={12} color="#0B111E" />
                     </View>
                   </View>
@@ -256,11 +341,22 @@ export default function DiagnosticsScreen() {
                     onPress={() => setSelectedPointIndex(idx)}
                     className={`mx-1.5 px-4 py-2.5 rounded-2xl border flex-row items-center ${
                       isSelected
-                        ? 'bg-brand border-brand shadow-sm shadow-brand/30'
+                        ? 'bg-brand border-brand'
                         : wp.treated
                         ? 'bg-surface border-surfaceBorder'
                         : 'bg-surfaceElevated border-surfaceBorder'
                     }`}
+                    style={
+                      isSelected
+                        ? {
+                            shadowColor: '#00F2FE',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 2,
+                            elevation: 2,
+                          }
+                        : undefined
+                    }
                   >
                     <Typography
                       variant="label"
@@ -277,7 +373,7 @@ export default function DiagnosticsScreen() {
                         status="amber"
                         size="sm"
                         showDot={false}
-                        className={isSelected ? 'bg-black/20' : ''}
+                        style={isSelected ? { backgroundColor: 'rgba(0, 0, 0, 0.2)' } : undefined}
                       />
                     )}
                   </Pressable>
@@ -383,11 +479,28 @@ export default function DiagnosticsScreen() {
               variant="primary"
               size="large"
               icon={Navigation}
-              disabled={!selectedWaypoint}
+              disabled={!selectedWaypoint || Boolean(statusData?.mission_state && statusData.mission_state !== 'idle' && statusData.mission_state !== 'completed')}
               onPress={() => {
                 if (selectedWaypoint) {
                   dispatchRobot.mutate(selectedWaypoint.id, {
-                    onSuccess: () => Alert.alert('Success', `Dispatched SHELLOC vessel to Point ${selectedWaypoint.point_number}`)
+                    onSuccess: () => {
+                      Toast.show({
+                        type: 'success',
+                        text1: 'Dispatch Successful',
+                        text2: `SHELLOC vessel is en route to Point ${selectedWaypoint.point_number}.`,
+                        position: 'top',
+                        topOffset: 55,
+                      });
+                    },
+                    onError: (error: any) => {
+                      Toast.show({
+                        type: 'error',
+                        text1: 'Dispatch Failed',
+                        text2: error?.message || 'The vessel cannot accept new targets right now.',
+                        position: 'top',
+                        topOffset: 55,
+                      });
+                    }
                   });
                 }
               }}

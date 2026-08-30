@@ -76,6 +76,7 @@ export interface TreatmentEvent {
   robot_id: string;
   waypoint_id: string;
   moringa_chitosan_ml: number;
+  flocculant_dosed_ml?: number;
   citric_acid_ml: number;
   biochar_filtration_applied?: boolean;
   floc_aggregation_time_sec?: number;

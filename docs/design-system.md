@@ -136,3 +136,20 @@ src/app/
 Tailwind opacity modifiers (e.g. `shadow-brand/40`, `bg-surface/90`) inside dynamic JSX template expressions trigger an async CSS parsing path that can race with React Navigation initialization.
 
 - **The Rule:** If a class string with an opacity modifier changes dynamically at runtime, pass the opacity via an inline `style` prop (e.g. `style={{ shadowColor: '#00F2FE', shadowOpacity: 0.4 }}`) rather than a dynamic `className`.
+
+---
+
+## 8. Global UX & Notifications
+
+### 1. API Error & Success Feedback
+- **Tooling:** `react-native-toast-message`
+- **Behavior:** All explicit user actions (e.g., dispatching a waypoint) that communicate with the backend must trigger a top-down toast notification (`position: 'top'`, `topOffset: 55`). 
+- **Visuals:** Uses standard toast types (`success`, `error`) to prevent alert fatigue while ensuring critical feedback (e.g. API 400 rejection on double-dispatch) is visible above all other UI elements.
+
+### 2. Mission Complete UX (`MissionCompleteModal`)
+- **Trigger:** Auto-triggers in `diagnostics.tsx` when the `statusData.mission_state` transitions from an active phase to `completed`.
+- **Visuals:** Full-screen immersive modal.
+  - **Backdrop:** Semi-transparent dark background (`bg-background/90`).
+  - **Iconography:** Giant `CheckCircle2` colored with the `leaf` token.
+  - **Typography:** "Remediation Successful" using H1, and an acknowledgment button.
+- **Purpose:** Delivers a premium, satisfying conclusion to the automated remediation cycle without relying on easily-missed standard toasts.

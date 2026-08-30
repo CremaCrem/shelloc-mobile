@@ -108,17 +108,17 @@ export default function ActivityScreen() {
                 <Typography variant="label" color="ink" className="font-mono">
                   {treatment.moringa_chitosan_ml ?? treatment.flocculant_dosed_ml ?? 0} mL
                 </Typography>
-              </div>
+              </View>
 
               <View className="flex-row justify-between items-center mb-2">
                 <View className="flex-row items-center">
                   <Droplet size={14} color="#F59E0B" className="mr-2" />
                   <Typography variant="caption" color="inkMuted">Citric Acid</Typography>
-                </div>
+                </View>
                 <Typography variant="label" color="ink" className="font-mono">
                   {treatment.citric_acid_ml ?? 0} mL
                 </Typography>
-              </div>
+              </View>
               
               <View className="flex-row justify-between items-center mt-1 pt-2 border-t border-surfaceBorder/50">
                 <View className="flex-row items-center mr-2 flex-shrink-0">

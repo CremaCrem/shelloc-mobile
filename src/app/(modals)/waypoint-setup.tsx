@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View,
+  Text,
   ScrollView,
   Pressable,
   Alert,
@@ -182,30 +183,28 @@ export default function WaypointSetupModal() {
                         onPress={() => setActiveWaypointId(wp.id)}
                         anchor={{ x: 0.5, y: 0.5 }}
                       >
-                        <View className="items-center">
-                          <View
-                            className={`w-7 h-7 rounded-full items-center justify-center border ${
-                              isActive
-                                ? 'bg-brand border-brand'
-                                : wp.treated
-                                ? 'bg-leafMuted border-leaf'
-                                : 'bg-surfaceElevated border-brand'
-                            }`}
-                            style={
-                              isActive 
-                                ? { shadowColor: '#00F2FE', shadowOpacity: 0.5, shadowRadius: 10, elevation: 5 } 
-                                : (!isActive && !wp.treated) 
-                                ? { borderColor: 'rgba(0, 242, 254, 0.6)' } 
-                                : undefined
-                            }
-                          >
-                            <Typography
-                              variant="caption"
-                              color={isActive ? 'dark' : wp.treated ? 'leaf' : 'brand'}
-                              className="font-bold text-[10px]"
-                            >
+                        <View style={{ alignItems: 'center' }}>
+                          <View style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 14,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderWidth: 1,
+                            backgroundColor: isActive ? '#00F2FE' : wp.treated ? 'rgba(16, 185, 129, 0.2)' : '#1E293B',
+                            borderColor: isActive ? '#00F2FE' : wp.treated ? '#10B981' : '#00F2FE',
+                            shadowColor: isActive ? '#00F2FE' : 'transparent',
+                            shadowOpacity: isActive ? 0.5 : 0,
+                            shadowRadius: 10,
+                            elevation: isActive ? 5 : 0
+                          }}>
+                            <Text style={{
+                              fontWeight: 'bold',
+                              fontSize: 10,
+                              color: isActive ? '#0B111E' : wp.treated ? '#10B981' : '#00F2FE'
+                            }}>
                               P{wp.point_number}
-                            </Typography>
+                            </Text>
                           </View>
                         </View>
                       </Marker>
@@ -215,10 +214,17 @@ export default function WaypointSetupModal() {
                 
                 {/* Crosshair & Selected Target Pin */}
                 <Marker coordinate={selectedCoordinates} anchor={{ x: 0.5, y: 0.5 }}>
-                  <View className="items-center justify-center">
+                  <View style={{ alignItems: 'center', justifyContent: 'center' }}>
                     <View 
-                      className="w-12 h-12 rounded-full border border-dashed border-brand animate-spin absolute" 
-                      style={{ borderColor: 'rgba(0, 242, 254, 0.6)' }}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 24,
+                        borderWidth: 1,
+                        borderStyle: 'dashed',
+                        borderColor: 'rgba(0, 242, 254, 0.6)',
+                        position: 'absolute'
+                      }}
                     />
                     <Crosshair size={28} color="#00F2FE" />
                   </View>
