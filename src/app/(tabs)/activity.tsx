@@ -7,7 +7,7 @@ import { Card } from '@/components/core/Card';
 import { Badge } from '@/components/core/Badge';
 import { useTreatments } from '@/hooks/useTreatments';
 
-export default function TreatmentsScreen() {
+export default function ActivityScreen() {
   const { data: treatments, isLoading, isError, refetch } = useTreatments();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -36,7 +36,7 @@ export default function TreatmentsScreen() {
         </View>
         <View>
           <Typography variant="h2" color="ink" className="font-bold">
-            Treatment Log
+            Activity Log
           </Typography>
           <Typography variant="caption" color="inkMuted">
             HISTORICAL REMEDIATION EVENTS
@@ -103,14 +103,24 @@ export default function TreatmentsScreen() {
               <View className="flex-row justify-between items-center mb-2">
                 <View className="flex-row items-center">
                   <Droplet size={14} color="#00F2FE" className="mr-2" />
-                  <Typography variant="caption" color="inkMuted">Flocculant Dosed</Typography>
+                  <Typography variant="caption" color="inkMuted">Moringa-Chitosan</Typography>
                 </View>
                 <Typography variant="label" color="ink" className="font-mono">
-                  {treatment.flocculant_dosed_ml} mL
+                  {treatment.moringa_chitosan_ml ?? treatment.flocculant_dosed_ml ?? 0} mL
                 </Typography>
-              </View>
+              </div>
+
+              <View className="flex-row justify-between items-center mb-2">
+                <View className="flex-row items-center">
+                  <Droplet size={14} color="#F59E0B" className="mr-2" />
+                  <Typography variant="caption" color="inkMuted">Citric Acid</Typography>
+                </div>
+                <Typography variant="label" color="ink" className="font-mono">
+                  {treatment.citric_acid_ml ?? 0} mL
+                </Typography>
+              </div>
               
-              <View className="flex-row justify-between items-center">
+              <View className="flex-row justify-between items-center mt-1 pt-2 border-t border-surfaceBorder/50">
                 <View className="flex-row items-center mr-2 flex-shrink-0">
                   <Layers size={14} color="#94A3B8" className="mr-2" />
                   <Typography variant="caption" color="inkMuted">Waypoint ID</Typography>

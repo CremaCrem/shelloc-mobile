@@ -41,16 +41,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="map"
+        name="activity"
         options={{
-          title: 'Map',
-          tabBarIcon: ({ color, size }) => <Map size={size || 22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="treatments"
-        options={{
-          title: 'Treatments',
+          title: 'Activity Log',
           tabBarIcon: ({ color, size }) => <Droplet size={size || 22} color={color} />,
         }}
       />
