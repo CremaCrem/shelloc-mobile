@@ -32,6 +32,8 @@ import { Badge } from '@/components/core/Badge';
 import { Button } from '@/components/core/Button';
 import { StatusHeader } from '@/components/core/StatusHeader';
 import { StatCard } from '@/components/domain/StatCard';
+import { BuoyancyAlert } from '@/components/domain/BuoyancyAlert';
+import { AdaptiveRemediationBadge } from '@/components/domain/AdaptiveRemediationBadge';
 import { useTelemetry } from '@/hooks/useTelemetry';
 import { useWaypoints } from '@/hooks/useWaypoints';
 import { useDispatchRobot } from '@/hooks/useDispatch';
@@ -104,6 +106,8 @@ export default function DiagnosticsScreen() {
         batteryPercent={statusData?.battery_percent ?? 86}
         gpsSignal="good"
       />
+
+      <BuoyancyAlert isVisible={statusData?.overall_status === 'buoyancy_failsafe' || statusData?.buoyancy_failsafe_active === true} />
 
       <ScrollView
         className="flex-1"
@@ -299,11 +303,19 @@ export default function DiagnosticsScreen() {
                 </Typography>
               </View>
 
-              <Badge
-                label={selectedWaypoint.treated ? 'REMEDIATED' : 'UNTREATED'}
-                status={selectedWaypoint.treated ? 'leaf' : 'amber'}
-                size="md"
-              />
+              <View className="items-end">
+                <Badge
+                  label={selectedWaypoint.treated ? 'REMEDIATED' : 'UNTREATED'}
+                  status={selectedWaypoint.treated ? 'leaf' : 'amber'}
+                  size="md"
+                />
+                <View className="mt-2">
+                  <AdaptiveRemediationBadge 
+                    reagentType="citric_acid" 
+                    isVisible={selectedWaypoint.treated} 
+                  />
+                </View>
+              </View>
             </View>
           )}
 

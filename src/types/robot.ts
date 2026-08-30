@@ -1,6 +1,16 @@
 export type OperationMode = 'autonomous' | 'manual';
 export type GpsSignalQuality = 'good' | 'weak' | 'none';
-export type MissionState = 'idle' | 'navigating' | 'inside_boundary' | 'treating' | 'completed';
+export type MissionState = 
+  | 'idle' 
+  | 'navigating' 
+  | 'baseline_evaluating' 
+  | 'dispensing_flocculant' 
+  | 'incubating_15m' 
+  | 'mesh_biochar_filtering' 
+  | 'post_evaluating' 
+  | 'adaptive_stabilization' 
+  | 'completed' 
+  | 'failsafe_buoyancy';
 export type SensorQualityStatus = 'good' | 'borderline' | 'critical' | 'no_data';
 
 export interface RobotStatus {
@@ -14,6 +24,11 @@ export interface RobotStatus {
   points_treated_today?: number;
   target_waypoint_id?: string | null;
   mission_state?: MissionState;
+  flocculant_tank_percent?: number;
+  citric_acid_tank_percent?: number;
+  biochar_health_status?: 'optimal' | 'degraded' | 'replace';
+  timer_remaining_sec?: number | null;
+  buoyancy_failsafe_active?: boolean;
   last_sync?: string;
   last_updated?: string;
   overall_status?: string;
@@ -60,7 +75,13 @@ export interface TreatmentEvent {
   id: string;
   robot_id: string;
   waypoint_id: string;
-  flocculant_dosed_ml: number;
+  moringa_chitosan_ml: number;
+  citric_acid_ml: number;
+  biochar_filtration_applied?: boolean;
+  floc_aggregation_time_sec?: number;
+  secondary_treatment_applied?: boolean;
+  secondary_reagent_type?: 'flocculant' | 'citric_acid' | null;
+  secondary_dosage_ml?: number | null;
   started_at: string;
   ended_at?: string | null;
   outcome?: string | null;

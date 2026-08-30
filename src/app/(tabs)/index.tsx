@@ -23,6 +23,8 @@ import { Badge } from '@/components/core/Badge';
 import { Button } from '@/components/core/Button';
 import { StatusHeader, type ConnectionStatus, type RobotState } from '@/components/core/StatusHeader';
 import { ProgressRing } from '@/components/domain/ProgressRing';
+import { CountdownTimer } from '@/components/domain/CountdownTimer';
+import { ReagentGauge } from '@/components/domain/ReagentGauge';
 import { useTelemetry } from '@/hooks/useTelemetry';
 
 export default function DashboardScreen() {
@@ -271,6 +273,21 @@ export default function DashboardScreen() {
               </View>
             </Card>
           </View>
+
+          {/* Reagent Gauge */}
+          <ReagentGauge
+            moringaPercent={statusData?.flocculant_tank_percent ?? 85}
+            citricAcidPercent={statusData?.citric_acid_tank_percent ?? 92}
+            biocharStatus={statusData?.biochar_health_status ?? 'optimal'}
+          />
+
+          {/* Incubation Countdown */}
+          {statusData?.mission_state === 'incubating_15m' && (
+            <CountdownTimer
+              timerRemainingSec={statusData.timer_remaining_sec}
+              isActive={true}
+            />
+          )}
 
           {/* 5. Proponents Card */}
           <Card className="p-5 border border-surfaceBorder bg-surface">
