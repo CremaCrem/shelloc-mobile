@@ -127,14 +127,14 @@ export default function DashboardScreen() {
               to eliminate suspended particulate matter and restore open water ecosystems.
             </Typography>
 
-            <View className="flex-row items-center pt-2 border-t border-surfaceBorder gap-4">
-              <View className="flex-row items-center">
+            <View className="flex-row items-center pt-2 border-t border-surfaceBorder flex-wrap gap-3">
+              <View className="flex-row items-center flex-shrink-0">
                 <Zap size={14} color="#10B981" />
                 <Typography variant="caption" color="inkSubtle" className="ml-1 font-medium">
                   Bio-Flocculation Active
                 </Typography>
               </View>
-              <View className="flex-row items-center">
+              <View className="flex-row items-center flex-shrink-0">
                 <Radio size={14} color="#00F2FE" />
                 <Typography variant="caption" color="inkSubtle" className="ml-1 font-medium">
                   2m Geofence Autonomy
@@ -152,13 +152,14 @@ export default function DashboardScreen() {
             >
               <View>
                 <View className="flex-row items-center justify-between mb-3">
-                  <View className="p-2 rounded-xl bg-leafMuted border border-leaf/30">
+                  <View className="p-2 rounded-xl bg-leafMuted border" style={{ borderColor: 'rgba(16, 185, 129, 0.3)' }}>
                     <Cpu size={20} color="#10B981" />
                   </View>
                   <Badge
-                    label={operationMode.toUpperCase()}
+                    label={operationMode === 'autonomous' ? 'AUTO' : 'MANUAL'}
                     status={operationMode === 'autonomous' ? 'leaf' : 'amber'}
                     size="sm"
+                    showDot={false}
                   />
                 </View>
                 <Typography variant="caption" color="inkMuted" className="uppercase font-semibold tracking-wider">
@@ -219,7 +220,7 @@ export default function DashboardScreen() {
             <Card className="flex-1 p-5 border border-surfaceBorder justify-between">
               <View>
                 <View className="flex-row items-center justify-between mb-3">
-                  <View className="p-2 rounded-xl bg-brandMuted border border-brand/30">
+                  <View className="p-2 rounded-xl bg-brandMuted border" style={{ borderColor: 'rgba(0, 242, 254, 0.3)' }}>
                     <Clock size={20} color="#00F2FE" />
                   </View>
                   <View className="w-2.5 h-2.5 rounded-full bg-leaf animate-pulse" />
@@ -246,10 +247,10 @@ export default function DashboardScreen() {
             <Card className="flex-1 p-5 border border-surfaceBorder justify-between">
               <View>
                 <View className="flex-row items-center justify-between mb-3">
-                  <View className="p-2 rounded-xl bg-leafMuted border border-leaf/30">
+                  <View className="p-2 rounded-xl bg-leafMuted border" style={{ borderColor: 'rgba(16, 185, 129, 0.3)' }}>
                     <ShieldCheck size={20} color="#10B981" />
                   </View>
-                  <Badge label="READY" status="leaf" size="sm" />
+                  <Badge label="READY" status="leaf" size="sm" showDot={false} />
                 </View>
                 <Typography variant="caption" color="inkMuted" className="uppercase font-semibold tracking-wider">
                   App Readiness
@@ -294,7 +295,7 @@ export default function DashboardScreen() {
             </Typography>
 
             <View className="bg-surfaceElevated p-3 rounded-2xl border border-surfaceBorder flex-row items-center justify-between">
-              <View>
+              <View className="flex-1 mr-2">
                 <Typography variant="caption" color="inkSubtle" className="font-semibold uppercase text-[10px]">
                   Project Lead & Research
                 </Typography>

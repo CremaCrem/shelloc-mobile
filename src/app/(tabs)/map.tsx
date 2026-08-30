@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography } from '@/components/core/Typography';
 import MapView, { Marker, Circle, Polyline } from 'react-native-maps';
 import { DARK_MAP_STYLE } from '@/constants/mapStyle';
@@ -15,6 +15,7 @@ export default function MapScreen() {
   const { statusData } = useTelemetry();
   const { data: waypointsData } = useWaypoints();
   const geofenceRadius = useAppStore(state => state.geofenceRadiusMeters);
+  const insets = useSafeAreaInsets();
   
   const [showGeofence, setShowGeofence] = useState(true);
   
@@ -156,7 +157,10 @@ export default function MapScreen() {
         </View>
 
         {/* Bottom Quick Action HUD */}
-        <View className="absolute bottom-6 left-4 right-4 bg-surface/95 border border-surfaceBorder rounded-3xl p-4 shadow-xl shadow-black/50 flex-row justify-around items-center">
+        <View 
+          className="absolute left-4 right-4 bg-surface/95 border border-surfaceBorder rounded-3xl pt-4 px-4 shadow-xl shadow-black/50 flex-row justify-around items-center"
+          style={{ bottom: 24, paddingBottom: Math.max(16, insets.bottom) }}
+        >
           <Pressable className="items-center justify-center active:opacity-70">
             <View className="w-12 h-12 rounded-full bg-surfaceElevated items-center justify-center mb-1">
               {statusData?.is_active ? (

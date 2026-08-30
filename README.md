@@ -1,36 +1,46 @@
 # SHELLOC Mobile App
 
-This is the React Native (Expo) companion application for the SHELLOC autonomous water-remediation robot.
+> **S**mart **H**ydro-**E**nvironmental **L**ocator and C**l**eaner — Mobile Companion Application
+
+React Native (Expo SDK ~57) companion application for the **SHELLOC** autonomous water-remediation robotic vessel. Delivers real-time closed-loop telemetry monitoring, geospatial waypoint missions, consumable reservoir tracking, and Google Gemini AI insights.
+
+---
+
+## 📱 Unified 4-View Navigation
+
+The mobile application organizes all operational capabilities into a clean 4-tab bottom navigation layout:
+
+1. **Home (`/index`):** Real-time telemetry command center (Turbidity, pH, TDS, Temp), reagent reservoir levels (Moringa-Chitosan %, Citric Acid %), 15-minute incubation countdown timer, and buoyancy failsafe alerts.
+2. **Diagnostics (`/diagnostics`):** Interactive GPS Zone Map with 2m geofence boundaries, waypoint selector drawer, before/after comparative delta cards, and raw telemetry data tables.
+3. **AI Chat (`/chat`):** Conversational water remediation assistant powered by Google Gemini (`gemini-3.7-flash`).
+4. **Feedback Display / Activity Log (`/activity`):** Chronological activity timeline, dual-reagent dispensing audit trails, and treatment event summary tables.
+
+---
 
 ## 📖 Architecture & Documentation
 
-To understand how this app is structured, styled, and integrated with the backend and hardware, please read the documentation blueprints located in the `docs/` folder:
+Detailed technical documentation is available in the `docs/` folder:
 
-1. **[Architecture Overview](docs/architecture.md)** – Tech stack, layer separation, and folder structure.
-2. **[Design System & Components](docs/design-system.md)** – Tokens, colors, typography, and core UI components.
-3. **[State & Data Flow](docs/state-and-data-flow.md)** – Local/Global state, API mapping, and real-time telemetry logic.
-4. **[Navigation & Routing](docs/navigation-and-routes.md)** – Expo Router screen tree, route guards, and deep linking.
-5. **[Development & DevOps Guide](docs/development-guide.md)** – macOS setup, Xcode requirements, and EAS build pipelines.
-
-*(Before writing any code or components, please familiarize yourself with these guidelines to ensure consistency.)*
+1. **[Architecture Overview](docs/architecture.md)** – Tech stack, layer separation, closed-loop features, and directory structure.
+2. **[Navigation & Routing](docs/navigation-and-routes.md)** – Unified 4-view hierarchy, deep links, and screen blueprints.
+3. **[Design System & Component Specs](docs/design-system.md)** – Tokens, typography, and domain widgets (15m countdown timer, reagent gauges, buoyancy alert).
+4. **[State Management & Data Flow](docs/state-and-data-flow.md)** – Zustand, React Query, WebSocket telemetry, and TypeScript definitions.
+5. **[Development Guide](docs/development-guide.md)** – Local development, Expo CLI, iOS simulator, and Android APK builds.
 
 ---
 
 ## 🚀 Quick Start
 
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
+```bash
+# 1. Install dependencies
+npm install
 
-2. **Start the development server**
-   ```bash
-   npx expo start
-   ```
+# 2. Start development server
+npx expo start
 
-3. **Run on iOS (Simulator)**
-   ```bash
-   npx expo start --ios
-   ```
+# 3. Run on iOS Simulator
+npx expo start --ios
 
-*Refer to [docs/development-guide.md](docs/development-guide.md) for detailed instructions on testing with physical devices or deploying builds.*
+# 4. Run on Android Emulator
+npx expo start --android
+```

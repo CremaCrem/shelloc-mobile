@@ -186,11 +186,18 @@ export default function WaypointSetupModal() {
                           <View
                             className={`w-7 h-7 rounded-full items-center justify-center border ${
                               isActive
-                                ? 'bg-brand border-brand shadow-lg shadow-brand'
+                                ? 'bg-brand border-brand'
                                 : wp.treated
                                 ? 'bg-leafMuted border-leaf'
-                                : 'bg-surfaceElevated border-brand/60'
+                                : 'bg-surfaceElevated border-brand'
                             }`}
+                            style={
+                              isActive 
+                                ? { shadowColor: '#00F2FE', shadowOpacity: 0.5, shadowRadius: 10, elevation: 5 } 
+                                : (!isActive && !wp.treated) 
+                                ? { borderColor: 'rgba(0, 242, 254, 0.6)' } 
+                                : undefined
+                            }
                           >
                             <Typography
                               variant="caption"
@@ -209,7 +216,10 @@ export default function WaypointSetupModal() {
                 {/* Crosshair & Selected Target Pin */}
                 <Marker coordinate={selectedCoordinates} anchor={{ x: 0.5, y: 0.5 }}>
                   <View className="items-center justify-center">
-                    <View className="w-12 h-12 rounded-full border border-dashed border-brand/60 animate-spin absolute" />
+                    <View 
+                      className="w-12 h-12 rounded-full border border-dashed border-brand animate-spin absolute" 
+                      style={{ borderColor: 'rgba(0, 242, 254, 0.6)' }}
+                    />
                     <Crosshair size={28} color="#00F2FE" />
                   </View>
                 </Marker>
@@ -231,7 +241,7 @@ export default function WaypointSetupModal() {
             </View>
 
             {/* Map Action Bar */}
-            <View className="p-4 bg-surface border-t border-surfaceBorder flex-row items-center justify-between">
+            <View className="p-4 bg-surface border-t border-surfaceBorder flex-col gap-3">
               <View>
                 <Typography variant="caption" color="inkMuted" className="font-semibold">
                   Boundary Geofence: 2.0 Meters

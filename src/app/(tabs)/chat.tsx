@@ -97,7 +97,7 @@ export default function ChatScreen() {
                   )}
                   
                   <View
-                    className={`max-w-[80%] rounded-2xl p-4 ${
+                    className={`max-w-[75%] rounded-2xl p-4 ${
                       isUser 
                         ? 'bg-brand rounded-tr-sm' 
                         : 'bg-surfaceElevated border border-surfaceBorder rounded-tl-sm'
@@ -151,8 +151,8 @@ export default function ChatScreen() {
         </ScrollView>
 
         {/* Input Area */}
-        <View className="p-4 bg-surface border-t border-surfaceBorder flex-row items-center">
-          <View className="flex-1 bg-[#050914] border border-surfaceBorder rounded-full flex-row items-center px-4 py-1 mr-3 h-12">
+        <View className="p-4 bg-surface border-t border-surfaceBorder flex-row items-end">
+          <View className="flex-1 bg-[#050914] border border-surfaceBorder rounded-3xl flex-row items-center px-4 py-3 mr-3 min-h-[48px] max-h-[120px]">
             <TextInput
               className="flex-1 text-ink font-sans text-base"
               placeholder="Ask about water quality..."

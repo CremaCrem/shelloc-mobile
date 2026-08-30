@@ -207,7 +207,7 @@ export default function DiagnosticsScreen() {
             </View>
 
             {/* 2. Status Legend Bar */}
-            <View className="p-3 bg-surfaceElevated border-t border-surfaceBorder flex-row items-center justify-around">
+            <View className="p-3 bg-surfaceElevated border-t border-surfaceBorder flex-row items-center flex-wrap gap-3">
               <View className="flex-row items-center">
                 <View className="w-2 h-2 rounded-full bg-leaf mr-1.5" />
                 <Typography variant="caption" color="inkMuted" className="text-[11px] font-medium">
@@ -321,9 +321,9 @@ export default function DiagnosticsScreen() {
                 unit: 'NTU',
                 deltaPercent: turbidityData.delta,
                 beforeStatus: 'danger',
-                beforeStatusLabel: `Critical (${turbidityData.before.toFixed(1)})`,
-                afterStatus: selectedWaypoint?.treated ? 'leaf' : 'danger',
-                afterStatusLabel: selectedWaypoint?.treated ? `Remediated (${turbidityData.after.toFixed(1)})` : 'Pending',
+                beforeStatusLabel: 'CRITICAL',
+                afterStatus: selectedWaypoint?.treated ? 'leaf' : 'amber',
+                afterStatusLabel: selectedWaypoint?.treated ? 'OPTIMAL' : 'PENDING',
               }}
             />
 
@@ -339,9 +339,9 @@ export default function DiagnosticsScreen() {
                 unit: 'pH',
                 deltaPercent: phData.delta,
                 beforeStatus: 'amber',
-                beforeStatusLabel: `Acidic (${phData.before.toFixed(2)})`,
+                beforeStatusLabel: 'ACIDIC',
                 afterStatus: selectedWaypoint?.treated ? 'leaf' : 'amber',
-                afterStatusLabel: selectedWaypoint?.treated ? `Optimal (${phData.after.toFixed(2)})` : 'Pending',
+                afterStatusLabel: selectedWaypoint?.treated ? 'OPTIMAL' : 'PENDING',
               }}
             />
 
@@ -357,9 +357,9 @@ export default function DiagnosticsScreen() {
                 unit: 'mg/L',
                 deltaPercent: doData.delta,
                 beforeStatus: 'danger',
-                beforeStatusLabel: `Hypoxic (${doData.before.toFixed(1)})`,
-                afterStatus: selectedWaypoint?.treated ? 'leaf' : 'danger',
-                afterStatusLabel: selectedWaypoint?.treated ? `Aerated (${doData.after.toFixed(1)})` : 'Pending',
+                beforeStatusLabel: 'HYPOXIC',
+                afterStatus: selectedWaypoint?.treated ? 'leaf' : 'amber',
+                afterStatusLabel: selectedWaypoint?.treated ? 'OPTIMAL' : 'PENDING',
               }}
             />
           </View>

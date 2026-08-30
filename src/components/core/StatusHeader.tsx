@@ -69,14 +69,15 @@ export function StatusHeader({
             <Bot size={22} color="#00F2FE" />
           </View>
           <View className="flex-shrink">
-            <View className="flex-row items-center flex-wrap gap-2">
+            <View className="flex-row items-center flex-wrap gap-2 mb-1">
               <Typography variant="h3" color="ink" className="mr-1 flex-shrink">
                 {robotName}
               </Typography>
               <Badge
-                label={operationMode.toUpperCase()}
+                label={operationMode === 'autonomous' ? 'AUTO' : 'MANUAL'}
                 status={operationMode === 'autonomous' ? 'leaf' : 'amber'}
                 size="sm"
+                showDot={false}
               />
             </View>
             <View className="flex-row items-center mt-1">
@@ -110,9 +111,9 @@ export function StatusHeader({
         </View>
 
         {/* Right: Quick telemetry pills */}
-        <View className="flex-row items-center space-x-2 flex-shrink-0">
+        <View className="flex-row items-center gap-2 flex-shrink-0">
           {/* Battery Chip */}
-          <View className="flex-row items-center bg-surfaceElevated border border-surfaceBorder px-2.5 py-1.5 rounded-xl mr-2">
+          <View className="flex-row items-center bg-surfaceElevated border border-surfaceBorder px-2.5 py-1.5 rounded-xl">
             <Battery size={16} color={batteryColor} />
             <Typography variant="caption" color="ink" className="ml-1 font-semibold">
               {batteryPercent}{typeof batteryPercent === 'number' ? '%' : ''}

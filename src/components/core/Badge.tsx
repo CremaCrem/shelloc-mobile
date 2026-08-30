@@ -22,25 +22,30 @@ export function Badge({
   let bgClass = 'bg-surfaceElevated border border-surfaceBorder';
   let dotClass = 'bg-inkSubtle';
   let textColor: TypographyColor = 'inkMuted';
+  let dynamicStyle: any = {};
 
   switch (status) {
     case 'leaf':
-      bgClass = 'bg-leafMuted border border-leaf/40';
+      bgClass = 'bg-leafMuted border';
+      dynamicStyle = { borderColor: 'rgba(16, 185, 129, 0.4)' };
       dotClass = 'bg-leaf';
       textColor = 'leaf';
       break;
     case 'amber':
-      bgClass = 'bg-amberMuted border border-amber/40';
+      bgClass = 'bg-amberMuted border';
+      dynamicStyle = { borderColor: 'rgba(245, 158, 11, 0.4)' };
       dotClass = 'bg-amber';
       textColor = 'amber';
       break;
     case 'danger':
-      bgClass = 'bg-dangerMuted border border-danger/40';
+      bgClass = 'bg-dangerMuted border';
+      dynamicStyle = { borderColor: 'rgba(239, 68, 68, 0.4)' };
       dotClass = 'bg-danger';
       textColor = 'danger';
       break;
     case 'brand':
-      bgClass = 'bg-brandMuted border border-brand/40';
+      bgClass = 'bg-brandMuted border';
+      dynamicStyle = { borderColor: 'rgba(0, 242, 254, 0.4)' };
       dotClass = 'bg-brand';
       textColor = 'brand';
       break;
@@ -57,7 +62,8 @@ export function Badge({
 
   return (
     <View
-      className={`rounded-full flex-row items-center justify-center self-start flex-shrink ${paddingClass} ${bgClass} ${className}`}
+      className={`rounded-full flex-row items-center justify-center self-start flex-shrink-0 ${paddingClass} ${bgClass} ${className}`}
+      style={[dynamicStyle, rest.style]}
       {...rest}
     >
       {showDot && (
@@ -66,10 +72,9 @@ export function Badge({
       <Typography
         variant="caption"
         color={textColor}
-        className="font-semibold uppercase tracking-wider text-center leading-none flex-shrink"
+        className="font-semibold uppercase tracking-wider text-center leading-tight flex-shrink-0"
         numberOfLines={1}
-        adjustsFontSizeToFit={true}
-        minimumFontScale={0.7}
+        style={{ includeFontPadding: false }}
       >
         {label}
       </Typography>

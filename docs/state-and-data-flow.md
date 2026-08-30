@@ -1,69 +1,114 @@
 # State Management & Data Flow
 
-This document details how data moves through the SHELLOC Mobile App, from the backend to the UI.
+This document details how telemetry, closed-loop mission updates, and AI interactions flow through the **SHELLOC Mobile App**.
+
+---
 
 ## 1. State Partitioning Strategy
 
-State in the app is divided into three distinct categories to prevent unnecessary re-renders and keep logic organized.
+State is structured into three clear boundaries:
 
-### A. Local Component State
-- **Definition:** Ephemeral state that only matters to a single component (e.g., whether a modal is open, form input values, current tab in a segmented control).
-- **Tooling:** React `useState` and `useReducer`.
-
-### B. Global App State
-- **Definition:** App-wide settings or context that don't frequently change and aren't tied directly to backend data (e.g., currently paired `robot_id`, app preferences, paired status).
-- **Tooling:** **Zustand** (`zustand`) for lightweight, boilerplate-free state management with optional local storage persistence via `async-storage`.
-
-### C. Server State & Cache
-- **Definition:** Data fetched from `shelloc-backend` (e.g., historical waypoints, sensor readings, treatment events). Handles loading, error, and automatic 5-second polling refetching logic.
-- **Tooling:** **TanStack React Query** (`@tanstack/react-query`) for automatic HTTP caching, background refetching, and polling control.
-
-## 2. Type Mapping (TypeScript to Backend)
-
-The frontend's data models (`src/types`) must strictly mirror the backend's Pydantic schemas (`shelloc-backend/schemas/`). 
-
-### Example Mapping
-
-*Backend (Pydantic):*
-```python
-class RobotStatusResponse(BaseModel):
-    robot_id: str
-    is_active: bool
-    current_action: str
-    battery_level: float
-    last_updated: datetime
+```
+┌───────────────────────────────────────────────────────────────┐
+│                    LOCAL COMPONENT STATE                      │
+│  UI modal visibility, selected waypoint tab, form inputs      │
+│  Tooling: React `useState` & `useReducer`                     │
+├───────────────────────────────────────────────────────────────┤
+│                      GLOBAL CLIENT STATE                      │
+│  Paired `robot_id`, user preferences, connection flags        │
+│  Tooling: `Zustand` with `AsyncStorage` persistence           │
+├───────────────────────────────────────────────────────────────┤
+│                     SERVER STATE & CACHE                      │
+│  Sensor readings, waypoints, treatment events, AI chat logs   │
+│  Tooling: `TanStack React Query` with 5s Polling & WebSocket  │
+└───────────────────────────────────────────────────────────────┘
 ```
 
-*Frontend (TypeScript):*
+---
+
+## 2. TypeScript Data Interfaces (`src/types/robot.ts`)
+
+The mobile client's TypeScript definitions strictly reflect the backend's Pydantic schemas:
+
 ```typescript
-// src/types/robot.ts
+export type OperationMode = 'autonomous' | 'manual';
+export type GpsSignalQuality = 'good' | 'weak' | 'none';
+export type SensorQualityStatus = 'good' | 'borderline' | 'critical' | 'no_data';
+
+export type MissionState =
+  | 'idle'
+  | 'navigating'
+  | 'baseline_evaluating'
+  | 'dispensing_flocculant'
+  | 'incubating_15m'
+  | 'mesh_biochar_filtering'
+  | 'post_evaluating'
+  | 'adaptive_stabilization'
+  | 'completed'
+  | 'failsafe_buoyancy';
+
 export interface RobotStatus {
   robot_id: string;
-  is_active: boolean;
-  current_action: string;
-  battery_level: number;
-  last_updated: string; // ISO 8601 string
+  operation_mode?: OperationMode;
+  gps_signal?: GpsSignalQuality;
+  current_lat?: number;
+  current_lng?: number;
+  battery_percent?: number;
+  points_treated_today?: number;
+  target_waypoint_id?: string | null;
+  mission_state?: MissionState;
+  flocculant_tank_percent?: number;
+  citric_acid_tank_percent?: number;
+  biochar_health_status?: 'optimal' | 'degraded' | 'replace';
+  timer_remaining_sec?: number | null;
+  buoyancy_failsafe_active?: boolean;
+  last_sync?: string;
+  overall_status?: string;
+}
+
+export interface SensorReading {
+  id: string;
+  robot_id: string;
+  waypoint_id?: string;
+  phase: 'before' | 'after';
+  turbidity_ntu: number;
+  ph: number;
+  tds_ppm: number;
+  temperature_celsius?: number;
+  nir_floc_score?: number | null;
+  obstacle_detected?: boolean;
+  sonar_distance_cm?: number;
+  timestamp: string;
+  status: SensorQualityStatus;
+}
+
+export interface TreatmentEvent {
+  id: string;
+  robot_id: string;
+  waypoint_id: string;
+  pollution_level: 'low' | 'medium' | 'high';
+  flocculant_dosed_ml: number;
+  citric_acid_dosed_ml: number;
+  biochar_filtration_applied: boolean;
+  floc_aggregation_time_sec: number;
+  secondary_treatment_applied: boolean;
+  secondary_reagent_type?: 'flocculant' | 'citric_acid' | null;
+  secondary_dosage_ml?: number | null;
+  started_at: string;
+  ended_at?: string | null;
+  outcome?: string | null;
 }
 ```
 
-*Rule:* Always define TypeScript interfaces for API requests and responses. Avoid using `any`.
+---
 
-## 3. Real-Time Telemetry & Connection Lifecycle
+## 3. Real-Time Telemetry & WebSocket Synchronization
 
-Because SHELLOC relies on live sensor data (turbidity, pH, TDS, GPS), the app must maintain a persistent, real-time connection to the backend.
-
-### Transport Protocol
-**DECISION MADE: HTTP Polling (5-Second Interval)**
-
-Given that SHELLOC is a research prototype, telemetry data (turbidity, pH, TDS, GPS) only needs to refresh every ~5 seconds. **WebSockets are NOT required.** 
-
-Using HTTP Polling via React Query (`refetchInterval: 5000`) provides significant architectural advantages:
-- **Backend Simplicity:** `shelloc-backend` remains 100% stateless and RESTful. No WebSocket connection handlers or state pools needed in FastAPI.
-- **Resilience:** If cell signal or Wi-Fi drops temporarily during field testing, the next 5-second HTTP request naturally succeeds when signal returns—no complex socket reconnection logic or dead-connection pinging needed.
-- **Ease of Inspection:** Polling endpoints (`GET /api/sensor-readings/latest`, `GET /api/robot-status/{id}`) can easily be tested directly in browser or Postman.
-
-### Telemetry Fetching Strategy (HTTP Polling)
-
-1. **Active Screen Polling:** When the user is on the `Dashboard` or `Map` screen, React Query automatically issues `GET` requests every 5 seconds.
-2. **Background Pause:** When the app is backgrounded or open to static screens (like `Settings`), polling pauses to save battery and bandwidth.
-3. **Data Ingestion & Smooth Animations:** When new data arrives every 5 seconds, the `StatCard` numbers and `ProgressRing` paths animate smoothly to their new values over 500ms using `react-native-reanimated`, giving the UI a fluid live feel without connection overhead.
+1. **WebSocket Telemetry Stream (`/ws/robot/{id}`):**
+   - Maintained in background by `services/telemetry.ts`.
+   - On incoming message, instantly invalidates React Query query cache `['robotStatus', robot_id]`.
+   - Updates `timer_remaining_sec` every 5 seconds for the 15-minute countdown display.
+2. **HTTP Polling Fallback:**
+   - If the WebSocket disconnects, React Query's `refetchInterval: 5000` automatically maintains a seamless data stream over standard REST.
+3. **Smooth Animated Transitions:**
+   - Numeric telemetry and SVG progress paths animate smoothly over 500ms using `react-native-reanimated`.

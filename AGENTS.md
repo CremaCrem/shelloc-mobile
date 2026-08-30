@@ -1,34 +1,22 @@
-# Expo HAS CHANGED
+# SHELLOC Mobile — Agent Context
 
-Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
+## Source of Truth Matrix
 
----
+| Question | Source of truth |
+|---|---|
+| What is SHELLOC Mobile? | [README.md](./README.md) |
+| How is the app structured? | [docs/architecture.md](./docs/architecture.md) |
+| What navigation routes exist? | [docs/navigation-and-routes.md](./docs/navigation-and-routes.md) |
+| What design tokens & component specs exist? | [docs/design-system.md](./docs/design-system.md) |
+| How does data & state flow? | [docs/state-and-data-flow.md](./docs/state-and-data-flow.md) |
 
-# NativeWind v4 — Critical Styling Rule
+## Core Operational Rules
 
-**Never use Tailwind opacity modifiers (`/n`) inside dynamic `className` expressions.**
-
-Classes like `shadow-brand/40`, `bg-surface/90`, `border-danger/30`, or a conditional `opacity-70` class trigger an async CSS parsing path in `react-native-css-interop` that races against React Navigation's context initialization. This produces a **misleading crash**:
-
-```
-Error: Couldn't find a navigation context. Have you wrapped your app with 'NavigationContainer'?
-```
-
-The app IS correctly wrapped — the crash is caused by NativeWind, not a missing NavigationContainer.
-
-**Rule:** If a class string with an opacity modifier changes between renders (inside a ternary or template literal), move the opacity-dependent value into an inline `style` prop instead.
-
-```tsx
-// ✅ Correct
-<Pressable
-  className={`rounded-full ${isActive ? 'bg-brand' : 'bg-surfaceElevated'}`}
-  style={isActive ? { shadowColor: '#00F2FE', shadowOpacity: 0.4, elevation: 4 } : undefined}
-/>
-
-// ❌ Crashes
-<Pressable
-  className={`rounded-full ${isActive ? 'bg-brand shadow-brand/40' : 'bg-surfaceElevated'}`}
-/>
-```
-
-See `docs/design-system.md` § 8 for full details and all affected class families.
+1. **Navigation Architecture:** Maintain the **4-view unified bottom tab layout**:
+   - `Home` (`/(tabs)/index`)
+   - `Diagnostics` (`/(tabs)/diagnostics`)
+   - `AI Chat` (`/(tabs)/chat`)
+   - `Feedback Display / Activity Log` (`/(tabs)/activity`)
+2. **AI Provider:** Dedicated to Google Gemini (`gemini-3.7-flash`).
+3. **Closed-Loop Support:** Reflect the 9-state lifecycle, 15-minute incubation countdown, dual reagents (Moringa-Chitosan + Citric Acid), and buoyancy failsafe alerts.
+4. **NativeWind v4 Styling Safety Rule:** Never use Tailwind opacity modifiers (`/n`) inside dynamic `className` expressions. Move opacity to an inline `style` prop (e.g. `style={{ shadowColor: '#00F2FE', shadowOpacity: 0.4 }}`).

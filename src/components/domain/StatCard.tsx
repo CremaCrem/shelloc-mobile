@@ -51,33 +51,34 @@ export function StatCard({
   className = '',
 }: StatCardProps) {
   let iconColor = '#00F2FE'; // brand
-  let iconBgClass = 'bg-brandMuted border-brand/30';
+  let iconBgClass = 'border';
+  let iconStyle: any = { backgroundColor: 'rgba(0, 242, 254, 0.15)', borderColor: 'rgba(0, 242, 254, 0.3)' };
 
   switch (category) {
     case 'turbidity':
       iconColor = '#00F2FE';
-      iconBgClass = 'bg-brandMuted border-brand/30';
+      iconStyle = { backgroundColor: 'rgba(0, 242, 254, 0.15)', borderColor: 'rgba(0, 242, 254, 0.3)' };
       break;
     case 'ph':
       iconColor = '#10B981';
-      iconBgClass = 'bg-leafMuted border-leaf/30';
+      iconStyle = { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)' };
       break;
     case 'tds':
       iconColor = '#F59E0B';
-      iconBgClass = 'bg-amberMuted border-amber/30';
+      iconStyle = { backgroundColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.3)' };
       break;
     case 'do':
       iconColor = '#38BDF8';
-      iconBgClass = 'bg-sky/15 border-sky/30';
+      iconStyle = { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' };
       break;
     case 'temperature':
       iconColor = '#F97316';
-      iconBgClass = 'bg-orange-500/15 border-orange-500/30';
+      iconStyle = { backgroundColor: 'rgba(249, 115, 22, 0.15)', borderColor: 'rgba(249, 115, 22, 0.3)' };
       break;
     case 'general':
     default:
       iconColor = '#00F2FE';
-      iconBgClass = 'bg-brandMuted border-brand/30';
+      iconStyle = { backgroundColor: 'rgba(0, 242, 254, 0.15)', borderColor: 'rgba(0, 242, 254, 0.3)' };
       break;
   }
 
@@ -106,17 +107,18 @@ export function StatCard({
       <Card onPress={onPress} className={`p-5 mb-4 ${className}`}>
         {/* Header: Icon + Metric Title + Category */}
         <View className="flex-row items-center justify-between mb-4">
-          <View className="flex-row items-center">
+          <View className="flex-row items-center flex-1 mr-2">
             <View
-              className={`p-2.5 rounded-2xl border ${iconBgClass} mr-3 items-center justify-center`}
+              className={`p-2.5 rounded-2xl ${iconBgClass} mr-3 items-center justify-center`}
+              style={iconStyle}
             >
               <Icon size={20} color={iconColor} />
             </View>
-            <View>
-              <Typography variant="h3" color="ink">
+            <View className="flex-shrink">
+              <Typography variant="h3" color="ink" numberOfLines={1}>
                 {title}
               </Typography>
-              <Typography variant="caption" color="inkSubtle">
+              <Typography variant="caption" color="inkSubtle" numberOfLines={1}>
                 {subtitle || 'Treatment Efficiency Comparison'}
               </Typography>
             </View>
@@ -152,11 +154,11 @@ export function StatCard({
         <View className="flex-row gap-3">
           {/* Before Treatment Column */}
           <View className="flex-1 bg-surfaceElevated border border-surfaceBorder rounded-2xl p-3.5">
-            <View className="flex-row items-center justify-between mb-2">
-              <Typography variant="caption" color="inkSubtle" className="uppercase font-semibold">
+            <View className="mb-2">
+              <Typography variant="caption" color="inkSubtle" className="uppercase font-semibold mb-1">
                 Before
               </Typography>
-              <Badge label={beforeStatusLabel} status={beforeStatus} size="sm" />
+              <Badge label={beforeStatusLabel} status={beforeStatus} size="sm" showDot={false} />
             </View>
             <View className="flex-row items-baseline">
               <Typography variant="h2" color="ink" className="mr-1">
@@ -171,12 +173,12 @@ export function StatCard({
           </View>
 
           {/* After Treatment Column */}
-          <View className="flex-1 bg-surfaceElevated border border-brand/40 rounded-2xl p-3.5">
-            <View className="flex-row items-center justify-between mb-2">
-              <Typography variant="caption" color="brand" className="uppercase font-semibold">
+          <View className="flex-1 bg-surfaceElevated border border-brand/40 rounded-2xl p-3.5" style={{ borderColor: 'rgba(0, 242, 254, 0.4)' }}>
+            <View className="mb-2">
+              <Typography variant="caption" color="brand" className="uppercase font-semibold mb-1">
                 After
               </Typography>
-              <Badge label={afterStatusLabel} status={afterStatus} size="sm" />
+              <Badge label={afterStatusLabel} status={afterStatus} size="sm" showDot={false} />
             </View>
             <View className="flex-row items-baseline">
               <Typography variant="h2" color="brand" className="mr-1 font-bold">
@@ -199,7 +201,8 @@ export function StatCard({
     <Card onPress={onPress} className={`flex-1 min-w-[150px] p-5 ${className}`}>
       <View className="flex-row justify-between items-start mb-3">
         <View
-          className={`p-2.5 rounded-2xl border ${iconBgClass} items-center justify-center`}
+          className={`p-2.5 rounded-2xl ${iconBgClass} items-center justify-center`}
+          style={iconStyle}
         >
           <Icon size={20} color={iconColor} />
         </View>

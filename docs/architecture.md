@@ -1,69 +1,81 @@
 # Architecture Overview
 
-This document serves as the high-level technical blueprint for the **SHELLOC Mobile App**. It outlines HOW the client is structured, how responsibilities are separated, and how it integrates with the robot and the backend.
+This document provides the high-level technical architecture for the **SHELLOC Mobile Companion App**, detailing its layered architecture, state synchronization, component structure, and closed-loop bioremediation support.
+
+---
 
 ## 1. System Context
 
-**SHELLOC Mobile** is a React Native (Expo) companion app for the SHELLOC autonomous water-remediation robot. It allows users to view live telemetry (turbidity, pH, TDS, GPS), manage treatment waypoints, view pollution heatmaps, and interact with an AI chat assistant to interpret sensor data in plain language.
+**SHELLOC Mobile** is a React Native companion application built on **Expo** designed for field operators monitoring the SHELLOC autonomous water-remediation robot. It provides real-time telemetry streaming, interactive waypoint mission setup, closed-loop treatment tracking, and AI-assisted data interpretation powered by **Google Gemini**.
 
 ### Tech Stack
 
-- **Framework:** React Native 0.86 via Expo SDK ~57
+- **Framework:** React Native 0.86 with Expo SDK ~57 (iOS & Android)
 - **Language:** TypeScript
-- **Routing:** Expo Router (File-based routing)
+- **Navigation:** Expo Router (File-based routing with 4-view bottom tab bar)
 - **Styling:** NativeWind (Tailwind CSS v3.4 for React Native)
 - **Animations:** React Native Reanimated 4.5
-- **Icons/Vectors:** `lucide-react-native` (Standardized cross-platform icon suite)
-- **State Management:** **Zustand** (Global app state) & **React Query** (Server state & caching)
+- **Iconography:** `lucide-react-native`
+- **State Management:** **Zustand** (Local/Global client state) & **TanStack React Query** (Server state, caching, 5-second polling/WebSocket sync)
+- **AI Integration:** Google Gemini (`gemini-3.7-flash` via Backend AI Gateway)
+
+---
 
 ## 2. Layered Architecture
 
-The application is structured into four distinct layers to separate UI rendering from business logic, data fetching, and hardware/device integration.
+The codebase strictly follows a four-layer separation of concerns:
 
-### A. UI Layer (`src/app` & `src/components`)
-- **Responsibility:** Rendering screens, routing, layouts, and reusable design system components.
-- **Rule:** UI components should be "dumb" where possible. They should receive data as props or via custom hooks and emit events (e.g., `onPress`).
-- **Styling:** Uses NativeWind utility classes to apply the design system tokens.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    UI LAYER (`src/app`)                     │
+│  4 Unified Views: Home, Diagnostics, AI Chat, Feedback Log  │
+├─────────────────────────────────────────────────────────────┤
+│               COMPONENT LAYER (`src/components`)            │
+│  Core Design System & Domain Widgets (Countdown, Gauges)    │
+├─────────────────────────────────────────────────────────────┤
+│                 LOGIC LAYER (`src/hooks`)                   │
+│  `useTelemetry`, `useWaypoints`, `useAIChat`, `useDispatch` │
+├─────────────────────────────────────────────────────────────┤
+│         STATE & TRANSPORT LAYER (`src/services`, `store`)   │
+│  React Query Cache, Zustand Store, WebSocket/REST API Client│
+└─────────────────────────────────────────────────────────────┘
+```
 
-### B. Hooks / Logic Layer (`src/hooks`)
-- **Responsibility:** Encapsulating complex component logic, composing state and side effects.
-- **Rule:** If a component has more than a couple of `useState` or `useEffect` calls, extract that logic into a custom hook (e.g., `useTelemetryStream()`, `useAIChat()`).
+---
 
-### C. State & Cache Layer (Zustand & React Query)
-- **Responsibility:** Managing global app state (e.g., selected robot `robot_id`, app preferences via Zustand) and caching server data (e.g., historical waypoints, treatment events via React Query).
-- **Rule:** Local state stays in components/hooks. Server state is managed by React Query (`@tanstack/react-query`) to handle loading, error, and automatic 5-second polling refetching.
-
-### D. Network & Hardware Layer (`src/services`)
-- **Responsibility:** Abstracting API calls, WebSocket/MQTT connections, and native device capabilities.
-- **Rule:** The UI layer should NEVER make direct `fetch()` calls. All network requests must go through API client wrappers defined in `services/`.
-
-## 3. Folder Structure Plan
+## 3. Directory Structure
 
 ```text
 src/
 ├── app/                  # Expo Router file-based routes
-│   ├── (tabs)/           # Main bottom tab navigation
-│   ├── (modals)/         # Full-screen or sheet modals
+│   ├── (tabs)/           # Unified 4-view tab bar
+│   │   ├── _layout.tsx   # Tab bar navigation & icon definitions
+│   │   ├── index.tsx     # [1] Home (Telemetry HUD & Tank Levels)
+│   │   ├── diagnostics.tsx# [2] Diagnostics (GPS Zone Map & Comparison)
+│   │   ├── chat.tsx      # [3] AI Chat (Google Gemini Assistant)
+│   │   └── activity.tsx  # [4] Feedback Display / Activity Log
+│   ├── (modals)/         # Modal presentation sheets
+│   │   └── waypoint-setup.tsx
 │   ├── _layout.tsx       # Root layout & providers
-│   ├── +not-found.tsx    # Fallback route for unmatched paths
-│   └── settings.tsx      # Root stack routes
-├── components/           # Reusable UI components
-│   ├── core/             # Design system components (Button, Card, Typography)
-│   └── domain/           # Feature-specific components (StatCard, HeatmapView)
-├── constants/            # Configuration and static data
-│   ├── theme.ts          # NativeWind/Tailwind theme overrides/exports
-│   └── config.ts         # Environment variables & API URLs
-├── hooks/                # Custom React hooks
-├── services/             # API clients, WebSocket managers, device APIs
-│   ├── api.ts            # REST client wrapper (Axios or Fetch)
-│   └── telemetry.ts      # Real-time data stream manager
-├── types/                # TypeScript interfaces & types (mapping to backend schemas)
-└── utils/                # Helper functions (date formatting, unit conversions)
+│   ├── +not-found.tsx    # Unmatched path handler
+│   └── settings.tsx      # Robot pairing and configuration
+├── components/           # Reusable UI component library
+│   ├── core/             # Design tokens: Button, Card, Badge, Typography
+│   └── domain/           # Feature widgets: CountdownTimer, ReagentGauge, StatCard, BuoyancyAlert
+├── constants/            # Design tokens, theme constants, and API configuration
+├── hooks/                # Custom React hooks encapsulating business logic
+├── services/             # REST and WebSocket client wrappers
+├── store/                # Zustand global state slices (paired robot ID, preferences)
+├── types/                # TypeScript interfaces mirroring backend Pydantic schemas
+└── utils/                # Date formatting, math helpers, and unit converters
 ```
 
-## 4. Interaction with Backend
+---
 
-The mobile app relies entirely on the **SHELLOC FastAPI Backend** as its source of truth.
-- **REST API:** Used for fetching historical data (waypoints, past treatments) and submitting configurations.
-- **Real-Time Data (HTTP Polling):** Telemetry (turbidity, pH, TDS) and robot status updates are polled every 5 seconds via standard HTTP GET requests (`refetchInterval: 5000` via React Query). WebSockets are not required for the research prototype scale.
-- **AI Chat:** The app sends user messages to the backend's AI endpoints, which return plain-language insights based on current robot telemetry context.
+## 4. Closed-Loop Feature Integration
+
+1. **Adaptive 9-State Lifecycle Synchronization:** The mobile client listens for `mission_state` transitions broadcast from the backend (`/ws/robot/{id}` or 5-second polling), animating UI status badges accordingly.
+2. **15-Minute Incubation Countdown:** When the robot enters `incubating_15m`, the client renders an animated circular countdown displaying `timer_remaining_sec`.
+3. **Consumable Reagent Telemetry:** The Home view tracks Moringa-Chitosan and Citric Acid reservoir percentages and biochar filter health.
+4. **Buoyancy Failsafe Alerting:** If GPS is lost and the vessel engages its ballast evacuation pump (`buoyancy_failsafe_active = True`), a top-level alert banner alerts the operator immediately.
+5. **Google Gemini AI Assistant:** The AI Chat tab provides natural-language telemetry interpretation, evaluating whether water parameters have met remediation thresholds ($NTU < 20$, $pH\ 6.0\text{–}7.0$, $TDS\ \sim 200\text{ ppm}$).

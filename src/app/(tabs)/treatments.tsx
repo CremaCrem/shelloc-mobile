@@ -111,13 +111,15 @@ export default function TreatmentsScreen() {
               </View>
               
               <View className="flex-row justify-between items-center">
-                <View className="flex-row items-center">
+                <View className="flex-row items-center mr-2 flex-shrink-0">
                   <Layers size={14} color="#94A3B8" className="mr-2" />
                   <Typography variant="caption" color="inkMuted">Waypoint ID</Typography>
                 </View>
-                <Typography variant="caption" color="inkSubtle" className="font-mono text-[10px]">
-                  {treatment.waypoint_id}
-                </Typography>
+                <View className="flex-shrink items-end">
+                  <Typography variant="caption" color="inkSubtle" className="font-mono text-[10px]" numberOfLines={1} ellipsizeMode="middle">
+                    {treatment.waypoint_id}
+                  </Typography>
+                </View>
               </View>
             </Card>
           ))}
