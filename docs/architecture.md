@@ -34,10 +34,10 @@ The codebase strictly follows a four-layer separation of concerns:
 │  Core Design System & Domain Widgets (Countdown, Gauges)    │
 ├─────────────────────────────────────────────────────────────┤
 │                 LOGIC LAYER (`src/hooks`)                   │
-│  `useTelemetry`, `useWaypoints`, `useAIChat`, `useDispatch` │
+│  `useTelemetry`, `useWaypoints`, `useAIChat`, `useJoystick` │
 ├─────────────────────────────────────────────────────────────┤
 │         STATE & TRANSPORT LAYER (`src/services`, `store`)   │
-│  React Query Cache, Zustand Store, WebSocket/REST API Client│
+│  React Query, Zustand, Bi-directional WebSocket Client      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -55,7 +55,8 @@ src/
 │   │   ├── chat.tsx      # [3] AI Chat (Google Gemini Assistant)
 │   │   └── activity.tsx  # [4] Feedback Display / Activity Log
 │   ├── (modals)/         # Modal presentation sheets
-│   │   └── waypoint-setup.tsx
+│   │   ├── waypoint-setup.tsx
+│   │   └── joystick.tsx  # Forced-landscape manual override controller
 │   ├── _layout.tsx       # Root layout & providers
 │   ├── +not-found.tsx    # Unmatched path handler
 │   └── settings.tsx      # Robot pairing and configuration
