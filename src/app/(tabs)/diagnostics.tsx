@@ -8,6 +8,8 @@ import {
   Dimensions,
   StyleSheet,
   Modal,
+  Image,
+  TouchableOpacity,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +20,8 @@ import {
   Activity,
   Droplet,
   FlaskConical,
-  Wind,
+  Thermometer,
+  Waves,
   Navigation,
   Radio,
   MapPin,
@@ -27,6 +30,7 @@ import {
   RotateCcw,
   Sliders,
   Maximize2,
+  Gamepad2,
 } from 'lucide-react-native';
 import { Typography } from '@/components/core/Typography';
 import { Card } from '@/components/core/Card';
@@ -70,7 +74,7 @@ export default function DiagnosticsScreen() {
   const selectedWaypoint = waypoints[selectedPointIndex] || null;
 
   // Helper to extract comparative data
-  const getComparativeData = (key: 'turbidity_ntu' | 'ph' | 'dissolved_oxygen', baseline: number) => {
+  const getComparativeData = (key: 'turbidity_ntu' | 'ph' | 'tds_ppm' | 'temperature', baseline: number) => {
     if (!selectedWaypoint) return { before: baseline, after: baseline, delta: 0 };
     
     const before = selectedWaypoint.before_reading?.[key] ?? baseline;
@@ -82,7 +86,8 @@ export default function DiagnosticsScreen() {
 
   const turbidityData = getComparativeData('turbidity_ntu', 124.5);
   const phData = getComparativeData('ph', 5.2);
-  const doData = getComparativeData('dissolved_oxygen', 3.8);
+  const tdsData = getComparativeData('tds_ppm', 320);
+  const temperatureData = getComparativeData('temperature', 28.5);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -170,7 +175,7 @@ export default function DiagnosticsScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00F2FE" />
         }
@@ -250,7 +255,7 @@ export default function DiagnosticsScreen() {
                   );
                 })}
 
-                {/* Robot Current Position Marker */}
+                {/* Robot Current Position — Turtle Marker */}
                 <Marker
                   coordinate={{ 
                     latitude: statusData?.current_lat ?? 14.59972, 
@@ -258,30 +263,29 @@ export default function DiagnosticsScreen() {
                   }}
                   anchor={{ x: 0.5, y: 0.5 }}
                   zIndex={10}
+                  flat={true}
+                  rotation={statusData?.heading_degrees ?? 0}
                 >
                   <View style={{ alignItems: 'center', justifyContent: 'center' }}>
                     <View style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      backgroundColor: 'rgba(0, 242, 254, 0.2)',
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      backgroundColor: 'rgba(0, 242, 254, 0.15)',
                       borderColor: '#00F2FE',
-                      borderWidth: 1,
-                      position: 'absolute'
-                    }} />
-                    <View style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 12,
-                      backgroundColor: '#00F2FE',
+                      borderWidth: 1.5,
                       alignItems: 'center',
                       justifyContent: 'center',
                       shadowColor: '#00F2FE',
-                      shadowOpacity: 0.5,
-                      shadowRadius: 4,
-                      elevation: 4
+                      shadowOpacity: 0.4,
+                      shadowRadius: 8,
+                      elevation: 6,
                     }}>
-                      <Navigation size={12} color="#0B111E" />
+                      <Image
+                        source={require('@/assets/images/turtle-marker.png')}
+                        style={{ width: 28, height: 28, tintColor: '#00F2FE' }}
+                        resizeMode="contain"
+                      />
                     </View>
                   </View>
                 </Marker>
@@ -453,21 +457,39 @@ export default function DiagnosticsScreen() {
               }}
             />
 
-            {/* Dissolved Oxygen Comparative Card */}
+            {/* TDS Comparative Card */}
             <StatCard
-              title="Dissolved Oxygen (DO)"
-              subtitle="Aeration & Dissolved Solids (mg/L)"
-              category="do"
-              icon={Wind}
+              title="Total Dissolved Solids"
+              subtitle="Water Purity & Conductivity (ppm)"
+              category="tds"
+              icon={Waves}
               comparative={{
-                beforeValue: doData.before.toFixed(1),
-                afterValue: doData.after.toFixed(1),
-                unit: 'mg/L',
-                deltaPercent: doData.delta,
+                beforeValue: tdsData.before.toFixed(0),
+                afterValue: tdsData.after.toFixed(0),
+                unit: 'ppm',
+                deltaPercent: tdsData.delta,
                 beforeStatus: 'danger',
-                beforeStatusLabel: 'HYPOXIC',
+                beforeStatusLabel: 'ELEVATED',
                 afterStatus: selectedWaypoint?.treated ? 'leaf' : 'amber',
                 afterStatusLabel: selectedWaypoint?.treated ? 'OPTIMAL' : 'PENDING',
+              }}
+            />
+
+            {/* Temperature Comparative Card */}
+            <StatCard
+              title="Water Temperature"
+              subtitle="Thermal Monitoring (°C)"
+              category="temperature"
+              icon={Thermometer}
+              comparative={{
+                beforeValue: temperatureData.before.toFixed(1),
+                afterValue: temperatureData.after.toFixed(1),
+                unit: '°C',
+                deltaPercent: temperatureData.delta,
+                beforeStatus: 'neutral',
+                beforeStatusLabel: 'BASELINE',
+                afterStatus: selectedWaypoint?.treated ? 'neutral' : 'amber',
+                afterStatusLabel: selectedWaypoint?.treated ? 'STABLE' : 'PENDING',
               }}
             />
           </View>
@@ -514,8 +536,49 @@ export default function DiagnosticsScreen() {
               onPress={() => router.push('/(modals)/waypoint-setup' as any)}
             />
           </View>
+
+          {/* 7. Manual Override FAB */}
+          {(!statusData?.mission_state || statusData.mission_state === 'idle' || statusData.mission_state === 'navigating') && (
+            <TouchableOpacity
+              style={[fabStyles.fab, isError && fabStyles.fabDisabled]}
+              onPress={() => router.push('/(modals)/manual-override' as any)}
+              activeOpacity={0.8}
+              disabled={isError}
+            >
+              <Gamepad2 size={22} color={isError ? "#94A3B8" : "#fff"} />
+              <Text style={[fabStyles.fabLabel, isError && { color: "#94A3B8" }]}>Manual Override</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+const fabStyles = StyleSheet.create({
+  fab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 16,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabDisabled: {
+    backgroundColor: '#334155',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  fabLabel: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+});

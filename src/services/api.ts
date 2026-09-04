@@ -1,9 +1,19 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useAppStore } from '../store/useAppStore';
 
-// Default base URL for production Render backend or local override via EXPO_PUBLIC_API_URL
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://shelloc-backend.onrender.com/api';
+// Android emulator cannot reach the host via `localhost` — use 10.0.2.2 instead.
+// iOS Simulator shares the Mac's network stack so localhost works fine.
+const resolveLocalUrl = (url: string) => {
+  if (Platform.OS === 'android') {
+    return url.replace('localhost', '10.0.2.2');
+  }
+  return url;
+};
+
+const rawUrl = process.env.EXPO_PUBLIC_API_URL || 'https://shelloc-backend.onrender.com/api';
+export const API_BASE_URL = resolveLocalUrl(rawUrl);
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

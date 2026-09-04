@@ -5,8 +5,10 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { StyleSheet } from 'react-native';
 
-export type CardVariant = 'default' | 'elevated' | 'outlined' | 'highlight';
+export type CardVariant = 'default' | 'elevated' | 'outlined' | 'highlight' | 'glass';
 
 interface BaseCardProps {
   className?: string;
@@ -60,13 +62,16 @@ export function Card({
     case 'highlight':
       variantStyles = 'bg-surface border border-brand/50 shadow-sm';
       break;
+    case 'glass':
+      variantStyles = 'bg-glass border border-glassBorder shadow-lg overflow-hidden';
+      break;
     case 'default':
     default:
       variantStyles = 'bg-surface border border-surfaceBorder shadow-sm';
       break;
   }
 
-  const baseStyles = `rounded-3xl p-5 ${variantStyles}`;
+  const baseStyles = `rounded-2xl p-5 ${variantStyles}`;
 
   if (onPress) {
     return (
@@ -79,6 +84,9 @@ export function Card({
         style={animatedStyle}
         {...(rest as PressableProps)}
       >
+        {variant === 'glass' && (
+          <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+        )}
         {children}
       </AnimatedPressable>
     );
@@ -86,6 +94,9 @@ export function Card({
 
   return (
     <View className={`${baseStyles} ${className}`} {...(rest as ViewProps)}>
+      {variant === 'glass' && (
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+      )}
       {children}
     </View>
   );

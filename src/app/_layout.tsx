@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '../components/core/ToastConfig';
 
@@ -26,17 +27,18 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={DarkTheme}>
           <Stack
             screenOptions={{
               headerStyle: {
-                backgroundColor: '#151F32',
+                backgroundColor: '#0F1629',
               },
               headerTintColor: '#F8FAFC',
               contentStyle: {
-                backgroundColor: '#0B111E',
+                backgroundColor: '#080D19',
               },
             }}
           >
@@ -50,11 +52,18 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="(modals)/manual-override"
+              options={{
+                presentation: 'fullScreenModal',
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
               name="settings"
               options={{
                 presentation: 'modal',
                 title: 'Settings & Config',
-                headerStyle: { backgroundColor: '#151F32' },
+                headerStyle: { backgroundColor: '#0F1629' },
                 headerTintColor: '#F8FAFC',
               }}
             />
@@ -65,5 +74,6 @@ export default function RootLayout() {
       </QueryClientProvider>
       <Toast config={toastConfig} />
     </SafeAreaProvider>
+  </GestureHandlerRootView>
   );
 }

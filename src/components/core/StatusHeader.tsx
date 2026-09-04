@@ -1,5 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Bot, Wifi, WifiOff, Battery, Radio } from 'lucide-react-native';
 import { Typography } from './Typography';
 import { Badge, type BadgeStatus } from './Badge';
@@ -61,11 +62,11 @@ export function StatusHeader({
       : '#EF4444';
 
   return (
-    <View className="px-6 py-4 bg-surface border-b border-surfaceBorder">
+    <BlurView intensity={80} tint="dark" className="px-6 py-4 border-b border-white/10">
       <View className="flex-row items-center justify-between">
         {/* Left: Robot identity */}
         <View className="flex-row items-center flex-1 mr-2">
-          <View className="bg-surfaceElevated border border-surfaceBorder p-2.5 rounded-2xl mr-3 flex-shrink-0">
+          <View className="bg-surfaceElevated border border-surfaceBorder p-2.5 rounded-full mr-3 flex-shrink-0">
             <Bot size={22} color="#00F2FE" />
           </View>
           <View className="flex-shrink">
@@ -113,7 +114,7 @@ export function StatusHeader({
         {/* Right: Quick telemetry pills */}
         <View className="flex-row items-center gap-2 flex-shrink-0">
           {/* Battery Chip */}
-          <View className="flex-row items-center bg-surfaceElevated border border-surfaceBorder px-2.5 py-1.5 rounded-xl">
+          <View className="flex-row items-center bg-surfaceElevated border border-surfaceBorder px-3 py-1.5 rounded-full">
             <Battery size={16} color={batteryColor} />
             <Typography variant="caption" color="ink" className="ml-1 font-semibold">
               {batteryPercent}{typeof batteryPercent === 'number' ? '%' : ''}
@@ -121,11 +122,11 @@ export function StatusHeader({
           </View>
 
           {/* Connection Chip */}
-          <View className="bg-surfaceElevated border border-surfaceBorder p-2 rounded-xl">
+          <View className="bg-surfaceElevated border border-surfaceBorder p-2 rounded-full">
             <WifiIcon size={16} color={wifiColor} />
           </View>
         </View>
       </View>
-    </View>
+    </BlurView>
   );
 }

@@ -10,7 +10,8 @@ export type MissionState =
   | 'post_evaluating' 
   | 'adaptive_stabilization' 
   | 'completed' 
-  | 'failsafe_buoyancy';
+  | 'failsafe_buoyancy'
+  | 'manual_override';
 export type SensorQualityStatus = 'good' | 'borderline' | 'critical' | 'no_data';
 
 export interface RobotStatus {
@@ -34,6 +35,7 @@ export interface RobotStatus {
   overall_status?: string;
   is_active?: boolean;
   current_action?: string;
+  heading_degrees?: number;
 }
 
 export interface SensorReading {
@@ -46,7 +48,6 @@ export interface SensorReading {
   ph: number;
   tds?: number;
   tds_ppm?: number;
-  dissolved_oxygen?: number; // DO in mg/L
   temperature?: number;
   nir_floc_score?: number | null;
   latitude?: number;

@@ -6,7 +6,7 @@ import { Badge, type BadgeStatus } from '../core/Badge';
 import { Sparkline } from './Sparkline';
 import { type LucideIcon, ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react-native';
 
-export type StatCategory = 'turbidity' | 'ph' | 'tds' | 'do' | 'temperature' | 'general';
+export type StatCategory = 'turbidity' | 'ph' | 'tds' | 'temperature' | 'general';
 
 interface ComparativeData {
   beforeValue: string | number;
@@ -67,10 +67,7 @@ export function StatCard({
       iconColor = '#F59E0B';
       iconStyle = { backgroundColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.3)' };
       break;
-    case 'do':
-      iconColor = '#38BDF8';
-      iconStyle = { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.3)' };
-      break;
+
     case 'temperature':
       iconColor = '#F97316';
       iconStyle = { backgroundColor: 'rgba(249, 115, 22, 0.15)', borderColor: 'rgba(249, 115, 22, 0.3)' };

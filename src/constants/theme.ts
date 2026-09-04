@@ -3,12 +3,12 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   dark: {
-    background: '#0B111E',
-    surface: '#151F32',
-    surfaceElevated: '#1E293B',
-    surfaceBorder: '#23334E',
-    backgroundElement: '#151F32',
-    backgroundSelected: '#1E293B',
+    background: '#080D19',
+    surface: '#0F1629',
+    surfaceElevated: '#182038',
+    surfaceBorder: '#1E2A45',
+    backgroundElement: '#0F1629',
+    backgroundSelected: '#182038',
     text: '#F8FAFC',
     textSecondary: '#94A3B8',
     textSubtle: '#64748B',
@@ -18,12 +18,13 @@ export const Colors = {
     amber: '#F59E0B',
   },
   light: {
-    background: '#0B111E',
-    surface: '#151F32',
-    surfaceElevated: '#1E293B',
-    surfaceBorder: '#23334E',
-    backgroundElement: '#151F32',
-    backgroundSelected: '#1E293B',
+    // Keeping dark mode as the only theme (Revolut-style dark-only)
+    background: '#080D19',
+    surface: '#0F1629',
+    surfaceElevated: '#182038',
+    surfaceBorder: '#1E2A45',
+    backgroundElement: '#0F1629',
+    backgroundSelected: '#182038',
     text: '#F8FAFC',
     textSecondary: '#94A3B8',
     textSubtle: '#64748B',
