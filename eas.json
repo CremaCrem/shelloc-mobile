@@ -5,17 +5,29 @@
     "build": {
         "development": {
             "developmentClient": true,
-            "distribution": "internal"
+            "distribution": "internal",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "http://localhost:8000/api",
+                "EXPO_PUBLIC_WS_URL": "ws://localhost:8000"
+            }
         },
         "preview": {
             "distribution": "internal",
             "android": {
                 "buildType": "apk"
+            },
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://shelloc-backend.onrender.com/api",
+                "EXPO_PUBLIC_WS_URL": "wss://shelloc-backend.onrender.com"
             }
         },
         "production": {
             "android": {
                 "buildType": "app-bundle"
+            },
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://shelloc-backend.onrender.com/api",
+                "EXPO_PUBLIC_WS_URL": "wss://shelloc-backend.onrender.com"
             }
         }
     }
