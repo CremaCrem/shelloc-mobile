@@ -84,7 +84,7 @@ SHELLOC Mobile is a cross-platform React Native application. When developing new
    - **Double Padding:** When wrapping tab screens in `<SafeAreaView>`, always specify `edges={['top']}`. Otherwise, you will generate "double bottom padding" because the bottom tab navigator already accounts for the bottom safe area.
 3. **Google Maps API Key:**
    - While `react-native-maps` uses Apple Maps on iOS out-of-the-box, it requires Google Play Services on Android.
-   - For standalone Android builds (APK/AAB), you **must** configure a valid Google Maps API Key in `app.json` under `android.config.googleMaps.apiKey`. Without this, the map will render as a blank grid or crash.
+   - For standalone Android builds (APK/AAB), you **must** configure a valid Google Maps API Key. We use an `app.config.js` to inject this dynamically. Ensure you set `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` in your `.env` file (or as an EAS secret). Without this, the map will render as a blank grid or crash.
 4. **Keyboard Handling:**
    - Android natively handles keyboard resizing (`windowSoftInputMode="adjustResize"`). iOS does not.
    - Use `<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>` to ensure uniform cross-platform behavior. Do not apply `behavior="padding"` unconditionally, as it will cause double-height visual glitches on Android.
