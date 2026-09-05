@@ -56,7 +56,7 @@ src/
 │   │   └── activity.tsx  # [4] Feedback Display / Activity Log
 │   ├── (modals)/         # Modal presentation sheets
 │   │   ├── waypoint-setup.tsx
-│   │   └── joystick.tsx  # Forced-landscape manual override controller
+│   │   └── manual-override.tsx  # Forced-landscape manual override controller
 │   ├── _layout.tsx       # Root layout & providers
 │   ├── +not-found.tsx    # Unmatched path handler
 │   └── settings.tsx      # Robot pairing and configuration
@@ -68,14 +68,13 @@ src/
 ├── services/             # REST and WebSocket client wrappers
 ├── store/                # Zustand global state slices (paired robot ID, preferences)
 ├── types/                # TypeScript interfaces mirroring backend Pydantic schemas
-└── utils/                # Date formatting, math helpers, and unit converters
 ```
 
 ---
 
 ## 4. Closed-Loop Feature Integration
 
-1. **Adaptive 9-State Lifecycle Synchronization:** The mobile client listens for `mission_state` transitions broadcast from the backend (`/ws/robot/{id}` or 5-second polling), animating UI status badges accordingly.
+1. **Adaptive 10-State Lifecycle Synchronization:** The mobile client tracks `mission_state` transitions (including `manual_override`) via **5-second HTTP polling**, animating UI status badges accordingly. (Note: WebSockets are strictly reserved for manual joystick control, not telemetry).
 2. **15-Minute Incubation Countdown:** When the robot enters `incubating_15m`, the client renders an animated circular countdown displaying `timer_remaining_sec`.
 3. **Consumable Reagent Telemetry:** The Home view tracks Moringa-Chitosan and Citric Acid reservoir percentages and biochar filter health.
 4. **Buoyancy Failsafe Alerting:** If GPS is lost and the vessel engages its ballast evacuation pump (`buoyancy_failsafe_active = True`), a top-level alert banner alerts the operator immediately.

@@ -49,7 +49,6 @@ export interface SensorReading {
   tds?: number;
   tds_ppm?: number;
   temperature?: number;
-  nir_floc_score?: number | null;
   latitude?: number;
   longitude?: number;
   timestamp: string;

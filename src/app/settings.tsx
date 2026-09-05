@@ -12,7 +12,6 @@ import Toast from 'react-native-toast-message';
 export default function SettingsScreen() {
   const { 
     activeRobotId, 
-    setActiveRobotId,
     apiBaseUrl,
     setApiBaseUrl,
     isDemoMode,
@@ -98,46 +97,6 @@ export default function SettingsScreen() {
               onPress={handlePingTest}
               disabled={isPinging}
             />
-          </View>
-        </View>
-
-        {/* Section 2: Fleet Pairing */}
-        <View className="mb-8">
-          <View className="flex-row items-center mb-4">
-            <SettingsIcon size={20} color="#00F2FE" className="mr-2" />
-            <Typography variant="h3" color="ink" className="font-bold">
-              Active Vessel Selection
-            </Typography>
-          </View>
-          
-          <View className="bg-surfaceElevated p-4 rounded-2xl border border-surfaceBorder">
-            <View className="flex-row flex-wrap gap-3">
-              {['SHELLOC-01', 'SHELLOC-02', 'R1'].map(id => {
-                const isActive = activeRobotId === id;
-                return (
-                  <Pressable
-                    key={id}
-                    onPress={() => setActiveRobotId(id)}
-                    className={`px-4 py-3 rounded-xl border ${
-                      isActive 
-                        ? 'bg-brand/10 border-brand' 
-                        : 'bg-surface border-surfaceBorder'
-                    }`}
-                  >
-                    <Typography 
-                      variant="label" 
-                      color={isActive ? 'brand' : 'ink'} 
-                      className="font-bold"
-                    >
-                      {id}
-                    </Typography>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Typography variant="caption" color="inkMuted" className="mt-4">
-              Switching the active vessel automatically redirects all telemetry and dispatch commands.
-            </Typography>
           </View>
         </View>
 

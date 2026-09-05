@@ -26,9 +26,11 @@ import { ProgressRing } from '@/components/domain/ProgressRing';
 import { CountdownTimer } from '@/components/domain/CountdownTimer';
 import { ReagentGauge } from '@/components/domain/ReagentGauge';
 import { useTelemetry } from '@/hooks/useTelemetry';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function DashboardScreen() {
   const { sensorData, statusData, isLoading, isError } = useTelemetry();
+  const isDemoMode = useAppStore((state) => state.isDemoMode);
   const [operationMode, setOperationMode] = useState<'autonomous' | 'manual'>('autonomous');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -47,8 +49,8 @@ export default function DashboardScreen() {
       : 'cleaning'
     : 'idle';
 
-  const battery = statusData?.battery_percent ?? statusData?.battery_level ?? (connectionState === 'connected' ? 86 : '--');
-  const pointsTreated = statusData?.points_treated_today ?? (connectionState === 'connected' ? 4 : '--');
+  const battery = statusData?.battery_percent ?? statusData?.battery_level ?? (isDemoMode && connectionState === 'connected' ? 86 : '--');
+  const pointsTreated = statusData?.points_treated_today ?? (isDemoMode && connectionState === 'connected' ? 4 : '--');
   const totalWaypoints = 6;
   const pointsProgress = pointsTreated === '--' ? 0 : (pointsTreated as number) / totalWaypoints;
 
@@ -300,13 +302,12 @@ export default function DashboardScreen() {
                   Proponents & Research Team
                 </Typography>
               </View>
-              <Badge label="DOST-PCHRD" status="neutral" size="sm" showDot={false} />
             </View>
 
             <Typography variant="body" color="inkMuted" className="text-sm leading-relaxed mb-3">
               Developed by the{' '}
               <Typography variant="body" color="ink" className="text-sm font-semibold">
-                Autonomous Environmental Robotics Lab
+                SHELLOC Research Team
               </Typography>{' '}
               for precision freshwater monitoring and micro-flocculation remediation.
             </Typography>
