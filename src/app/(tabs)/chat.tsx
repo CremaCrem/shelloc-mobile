@@ -6,20 +6,48 @@ import {
   KeyboardAvoidingView, 
   Platform,
   ActivityIndicator,
-  Pressable
+  Pressable,
+  StyleSheet
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Sparkles, Send, Bot, User } from 'lucide-react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Sparkles, Send, Bot, User, ArrowLeft } from 'lucide-react-native';
 import { Typography } from '@/components/core/Typography';
 import { useChatHistory, useSendMessage } from '@/hooks/useChat';
+import Markdown from 'react-native-markdown-display';
+
+const markdownStyles = StyleSheet.create({
+  body: {
+    color: '#F8FAFC',
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  strong: {
+    fontWeight: 'bold',
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 8,
+  },
+});
 
 export default function ChatScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data: chatHistory, isLoading, isError } = useChatHistory();
   const sendMessageMutation = useSendMessage();
   const [inputText, setInputText] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
 
   const messages = chatHistory || [];
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
 
   const handleSend = () => {
     if (!inputText.trim() || sendMessageMutation.isPending) return;
@@ -43,7 +71,15 @@ export default function ChatScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* Header */}
-        <View className="flex-row items-center px-6 py-3.5 bg-surface border-b border-surfaceBorder z-10">
+        <View className="flex-row items-center px-4 py-3 bg-surface border-b border-surfaceBorder z-10">
+          <Pressable
+            onPress={handleBack}
+            className="p-2 mr-2 rounded-xl bg-surfaceElevated border border-surfaceBorder active:opacity-70"
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft size={20} color="#F8FAFC" />
+          </Pressable>
           <View className="p-2 rounded-xl bg-brandMuted border border-brand/30 mr-3">
             <Sparkles size={20} color="#00F2FE" />
           </View>
@@ -61,7 +97,7 @@ export default function ChatScreen() {
         <ScrollView
           ref={scrollViewRef}
           className="flex-1 px-4 py-4"
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: 24 }}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
           {isLoading ? (
@@ -110,13 +146,19 @@ export default function ChatScreen() {
                       elevation: 2,
                     } : undefined}
                   >
-                    <Typography 
-                      variant="body" 
-                      color={isUser ? 'dark' : 'ink'} 
-                      className={isUser ? 'font-medium' : ''}
-                    >
-                      {msg.message}
-                    </Typography>
+                    {isUser ? (
+                      <Typography 
+                        variant="body" 
+                        color="dark"
+                        className="font-medium"
+                      >
+                        {msg.message}
+                      </Typography>
+                    ) : (
+                      <Markdown style={markdownStyles}>
+                        {msg.message}
+                      </Markdown>
+                    )}
                     <Typography 
                       variant="caption" 
                       color={isUser ? 'dark' : 'inkSubtle'} 
@@ -151,10 +193,13 @@ export default function ChatScreen() {
         </ScrollView>
 
         {/* Input Area */}
-        <View className="p-4 bg-surface border-t border-surfaceBorder flex-row items-end">
+        <View 
+          className="p-4 bg-surface border-t border-surfaceBorder flex-row items-end"
+          style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+        >
           <View className="flex-1 bg-[#050914] border border-surfaceBorder rounded-3xl flex-row items-center px-4 py-3 mr-3 min-h-[48px] max-h-[120px]">
             <TextInput
-              className="flex-1 text-ink font-sans text-base"
+              className="flex-1 text-ink font-normal text-base"
               placeholder="Ask about water quality..."
               placeholderTextColor="#475569"
               value={inputText}

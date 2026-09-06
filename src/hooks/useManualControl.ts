@@ -1,5 +1,14 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { Platform } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
+
+// Android emulator cannot reach host via localhost — use 10.0.2.2 instead
+const resolveLocalUrl = (url: string) => {
+  if (Platform.OS === 'android') {
+    return url.replace('localhost', '10.0.2.2');
+  }
+  return url;
+};
 
 export function useManualControl() {
   const activeRobotId = useAppStore((state) => state.activeRobotId);
@@ -10,7 +19,8 @@ export function useManualControl() {
   useEffect(() => {
     if (!activeRobotId) return;
 
-    const wsUrl = `${process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:8000'}/ws/robot/${activeRobotId}?role=mobile`;
+    const rawWsUrl = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:8000';
+    const wsUrl = `${resolveLocalUrl(rawWsUrl)}/ws/robot/${activeRobotId}?role=mobile`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {

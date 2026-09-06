@@ -19,6 +19,13 @@ interface FloatingTabBarProps {
 
 export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBarProps) {
   const insets = useSafeAreaInsets();
+  const currentRoute = state.routes[state.index];
+  const currentOptions = descriptors[currentRoute.key]?.options;
+
+  // If the active screen requested to hide the tab bar, do not render it
+  if (currentOptions?.tabBarStyle?.display === 'none') {
+    return null;
+  }
 
   return (
     <View

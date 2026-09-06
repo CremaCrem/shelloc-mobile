@@ -37,6 +37,7 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: 'AI Insights',
+          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ color, size }) => <Bot size={size || 20} color={color} />,
         }}
       />
