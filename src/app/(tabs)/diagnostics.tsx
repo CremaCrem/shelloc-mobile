@@ -54,12 +54,12 @@ function readValue(r: SensorReading | null | undefined, key: ReadingKey): number
     case 'turbidity': return r.turbidity_ntu ?? r.turbidity;
     case 'ph': return r.ph;
     case 'tds': return r.tds_ppm ?? r.tds;
-    case 'temperature': return r.temperature;
+    case 'temperature': return r.temperature_celsius ?? r.temperature;
   }
 }
 
 export default function DiagnosticsScreen() {
-  const { statusData, isLoading, isOnline, operationMode, canTakeManualControl, refetch } = useTelemetry();
+  const { statusData, readings, isLoading, isOnline, operationMode, canTakeManualControl, refetch } = useTelemetry();
   const { data: waypointsData, refetch: refetchWaypoints } = useWaypoints();
   const { data: treatments } = useTreatments();
   const mapRef = useRef<MapView>(null);
@@ -131,6 +131,16 @@ export default function DiagnosticsScreen() {
   const phData = getComparativeData('ph', 2);
   const tdsData = getComparativeData('tds', 0);
   const temperatureData = getComparativeData('temperature', 1);
+
+  // SONAR obstacle info from the newest reading that carries it.
+  const sonar = readings.find((r) => r.obstacle_detected != null || r.sonar_distance_cm != null);
+  const obstacleText = !sonar
+    ? '--'
+    : sonar.obstacle_detected
+    ? `DETECTED${sonar.sonar_distance_cm != null ? ` (${sonar.sonar_distance_cm.toFixed(0)} cm)` : ''}`
+    : sonar.sonar_distance_cm != null
+    ? `Clear (${sonar.sonar_distance_cm.toFixed(0)} cm)`
+    : 'Clear';
 
   // Extra reagent dose, only if the robot actually logged one for this waypoint.
   const secondaryReagent = treatments?.find(
@@ -372,6 +382,13 @@ export default function DiagnosticsScreen() {
                 <View className={`w-2 h-2 rounded-full mr-1.5 ${isOnline ? 'bg-leaf' : 'bg-inkSubtle'}`} />
                 <Typography variant="caption" color="inkMuted" className="text-[11px] font-medium">
                   Battery: {statusData?.battery_percent !== undefined ? `${statusData.battery_percent}%` : '--'}
+                </Typography>
+              </View>
+
+              <View className="flex-row items-center">
+                <View className={`w-2 h-2 rounded-full mr-1.5 ${sonar?.obstacle_detected ? 'bg-danger' : sonar ? 'bg-leaf' : 'bg-inkSubtle'}`} />
+                <Typography variant="caption" color="inkMuted" className="text-[11px] font-medium">
+                  Obstacle: {obstacleText}
                 </Typography>
               </View>
             </View>

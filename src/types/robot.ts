@@ -45,12 +45,15 @@ export interface SensorReading {
   phase?: 'before' | 'after';
   turbidity?: number;
   turbidity_ntu?: number;
-  ph: number;
+  ph?: number;
   tds?: number;
   tds_ppm?: number;
-  temperature?: number;
+  temperature_celsius?: number;
+  temperature?: number; // legacy alias
   latitude?: number;
   longitude?: number;
+  obstacle_detected?: boolean | null;
+  sonar_distance_cm?: number | null;
   timestamp: string;
   status?: SensorQualityStatus;
 }

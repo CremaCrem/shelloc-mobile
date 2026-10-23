@@ -91,7 +91,7 @@ describe('DiagnosticsScreen Phase 5 - Map & Telemetry', () => {
         current_lng: 120.5678,
         heading_degrees: 90,
       },
-      isLoading: false,
+      readings: [], isLoading: false,
       isError: false,
     });
 
@@ -109,7 +109,7 @@ describe('DiagnosticsScreen Phase 5 - Map & Telemetry', () => {
   it('test_fab_navigation: pressing connected FAB navigates to manual override', () => {
     (useTelemetry as jest.Mock).mockReturnValue({
       statusData: { mission_state: 'idle' },
-      isLoading: false,
+      readings: [], isLoading: false,
       isError: false,
       isOnline: true,
       canTakeManualControl: true,
@@ -127,7 +127,7 @@ describe('DiagnosticsScreen Phase 5 - Map & Telemetry', () => {
   it('test_fab_safety_disable: FAB is completely hidden/disabled when disconnected', () => {
     (useTelemetry as jest.Mock).mockReturnValue({
       statusData: { mission_state: 'idle' },
-      isLoading: false,
+      readings: [], isLoading: false,
       isError: true, // Simulating disconnect
     });
 
@@ -139,7 +139,7 @@ describe('DiagnosticsScreen Phase 5 - Map & Telemetry', () => {
 
   it('test_no_fake_values: missing readings, battery and position show "--", never placeholder numbers', () => {
     (useTelemetry as jest.Mock).mockReturnValue({
-      statusData: undefined, isLoading: false, isError: true, isOnline: false, canTakeManualControl: false,
+      statusData: undefined, readings: [], isLoading: false, isError: true, isOnline: false, canTakeManualControl: false,
     });
     (useWaypoints as jest.Mock).mockReturnValue({
       data: [{ id: 'wp-1', point_number: 1, treated: false, latitude: 14.0, longitude: 120.0, radius_meters: 2 }],
@@ -152,6 +152,7 @@ describe('DiagnosticsScreen Phase 5 - Map & Telemetry', () => {
     }
     expect(getAllByText('--').length).toBeGreaterThanOrEqual(8);
     expect(getByText('Vessel position: not reported')).toBeTruthy();
+    expect(getByText('Obstacle: --')).toBeTruthy();
     // Only the waypoint marker — no robot marker at a made-up location
     expect(getAllByTestId('map-marker')).toHaveLength(1);
   });
@@ -166,7 +167,7 @@ describe('DiagnosticsScreen Phase 6 - Sensor Telemetry & DO Cleanup', () => {
 
   it('test_comparative_delta_calculation: calculates % delta correctly for normal reduction', () => {
     (useTelemetry as jest.Mock).mockReturnValue({
-      statusData: {}, isLoading: false, isError: false,
+      statusData: {}, readings: [], isLoading: false, isError: false,
     });
     
     // Simulate a selected waypoint with before and after readings
@@ -190,7 +191,7 @@ describe('DiagnosticsScreen Phase 6 - Sensor Telemetry & DO Cleanup', () => {
 
   it('test_comparative_delta_calculation_edge_cases: zero before value and zero delta', () => {
     (useTelemetry as jest.Mock).mockReturnValue({
-      statusData: {}, isLoading: false, isError: false,
+      statusData: {}, readings: [], isLoading: false, isError: false,
     });
     
     // Simulate before = 0 (divide by zero edge case), and before = after case (0% delta)
@@ -222,7 +223,7 @@ describe('DiagnosticsScreen Phase 6 - Sensor Telemetry & DO Cleanup', () => {
         tds_ppm: 220,
         temperature: 28.1
       },
-      isLoading: false,
+      readings: [], isLoading: false,
       isError: false,
     });
 

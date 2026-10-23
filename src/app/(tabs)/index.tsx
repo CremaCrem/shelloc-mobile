@@ -47,7 +47,7 @@ function readValue(r: SensorReading | undefined, key: ReadingKey): number | unde
     case 'turbidity': return r.turbidity_ntu ?? r.turbidity;
     case 'ph': return r.ph;
     case 'tds': return r.tds_ppm ?? r.tds;
-    case 'temperature': return r.temperature;
+    case 'temperature': return r.temperature_celsius ?? r.temperature;
   }
 }
 
