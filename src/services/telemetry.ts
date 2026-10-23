@@ -2,9 +2,11 @@ import { apiClient } from './api';
 import { RobotStatus, SensorReading } from '../types/robot';
 
 export const telemetryService = {
-  getLatestReading: async (robotId: string): Promise<SensorReading> => {
-    // Note: Depends on backend implementation. Assuming standard REST path.
-    const { data } = await apiClient.get<SensorReading>(`/sensor-readings/latest?robot_id=${robotId}`);
+  // Newest first. Used for the live readings and their mini trend lines.
+  getRecentReadings: async (robotId: string, limit = 12): Promise<SensorReading[]> => {
+    const { data } = await apiClient.get<SensorReading[]>('/sensor-readings/', {
+      params: { robot_id: robotId, limit },
+    });
     return data;
   },
 

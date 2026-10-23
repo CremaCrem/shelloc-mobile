@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Switch, Pressable } from 'react-native';
+import { View, ScrollView, TextInput, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography } from '@/components/core/Typography';
 import { StatusBar } from 'expo-status-bar';
@@ -14,8 +14,6 @@ export default function SettingsScreen() {
     activeRobotId, 
     apiBaseUrl,
     setApiBaseUrl,
-    isDemoMode,
-    setIsDemoMode,
     geofenceRadiusMeters,
     setGeofenceRadiusMeters,
     flocculantCapacityMl,
@@ -157,26 +155,6 @@ export default function SettingsScreen() {
                 </Pressable>
               </View>
             </View>
-          </View>
-        </View>
-
-        {/* Section 4: Developer / Debug */}
-        <View className="mb-10">
-          <View className="bg-surfaceElevated p-4 rounded-2xl border border-surfaceBorder flex-row justify-between items-center">
-            <View>
-              <Typography variant="label" color="ink" className="font-semibold">
-                Simulated Telemetry
-              </Typography>
-              <Typography variant="caption" color="inkMuted">
-                Enable local sensor mock stream
-              </Typography>
-            </View>
-            <Switch 
-              value={isDemoMode}
-              onValueChange={setIsDemoMode}
-              trackColor={{ false: '#1E293B', true: '#00F2FE' }}
-              thumbColor={'#F8FAFC'}
-            />
           </View>
         </View>
 

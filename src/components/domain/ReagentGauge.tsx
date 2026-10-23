@@ -7,7 +7,8 @@ interface ReagentGaugeProps {
   biocharStatus?: 'optimal' | 'degraded' | 'replace';
 }
 
-export function ReagentGauge({ moringaPercent = 0, citricAcidPercent = 0, biocharStatus = 'optimal' }: ReagentGaugeProps) {
+// Missing values show "--" with an empty bar: the robot hasn't reported them.
+export function ReagentGauge({ moringaPercent, citricAcidPercent, biocharStatus }: ReagentGaugeProps) {
   const getBiocharColor = () => {
     switch(biocharStatus) {
       case 'optimal': return 'bg-emerald-500';
@@ -17,20 +18,27 @@ export function ReagentGauge({ moringaPercent = 0, citricAcidPercent = 0, biocha
     }
   };
 
+  const noData = moringaPercent === undefined && citricAcidPercent === undefined && biocharStatus === undefined;
+
   return (
     <View className="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50">
-      <Text className="text-white font-semibold text-lg mb-4">Consumables</Text>
-      
+      <Text className="text-white font-semibold text-lg mb-1">Consumables</Text>
+      <Text className="text-slate-400 text-xs mb-4">
+        {noData ? 'Not reported by the robot yet' : 'Reported by the robot'}
+      </Text>
+
       {/* Moringa */}
       <View className="mb-3">
         <View className="flex-row justify-between mb-1">
           <Text className="text-slate-300 text-sm">Moringa-Chitosan</Text>
-          <Text className="text-cyan-400 text-sm font-medium">{moringaPercent}%</Text>
+          <Text className="text-cyan-400 text-sm font-medium">
+            {moringaPercent === undefined ? '--' : `${moringaPercent}%`}
+          </Text>
         </View>
         <View className="h-2 bg-slate-700 rounded-full overflow-hidden">
-          <View 
-            className={`h-full ${moringaPercent < 20 ? 'bg-red-500' : 'bg-cyan-500'}`} 
-            style={{ width: `${moringaPercent}%` }} 
+          <View
+            className={`h-full ${(moringaPercent ?? 0) < 20 ? 'bg-red-500' : 'bg-cyan-500'}`}
+            style={{ width: `${moringaPercent ?? 0}%` }}
           />
         </View>
       </View>
@@ -39,12 +47,14 @@ export function ReagentGauge({ moringaPercent = 0, citricAcidPercent = 0, biocha
       <View className="mb-4">
         <View className="flex-row justify-between mb-1">
           <Text className="text-slate-300 text-sm">Citric Acid</Text>
-          <Text className="text-amber-400 text-sm font-medium">{citricAcidPercent}%</Text>
+          <Text className="text-amber-400 text-sm font-medium">
+            {citricAcidPercent === undefined ? '--' : `${citricAcidPercent}%`}
+          </Text>
         </View>
         <View className="h-2 bg-slate-700 rounded-full overflow-hidden">
-          <View 
-            className={`h-full ${citricAcidPercent < 15 ? 'bg-red-500' : 'bg-amber-500'}`} 
-            style={{ width: `${citricAcidPercent}%` }} 
+          <View
+            className={`h-full ${(citricAcidPercent ?? 0) < 15 ? 'bg-red-500' : 'bg-amber-500'}`}
+            style={{ width: `${citricAcidPercent ?? 0}%` }}
           />
         </View>
       </View>
@@ -54,7 +64,7 @@ export function ReagentGauge({ moringaPercent = 0, citricAcidPercent = 0, biocha
         <Text className="text-slate-300 text-sm">Biochar Filter</Text>
         <View className="flex-row items-center space-x-2">
           <View className={`w-2 h-2 rounded-full ${getBiocharColor()}`} />
-          <Text className="text-white text-sm capitalize">{biocharStatus}</Text>
+          <Text className="text-white text-sm capitalize">{biocharStatus ?? '--'}</Text>
         </View>
       </View>
     </View>

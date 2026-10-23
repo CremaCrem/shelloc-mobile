@@ -14,8 +14,12 @@ jest.mock('expo-router', () => {
 
 // Mock react-native-maps to prevent native module crashes
 jest.mock('react-native-maps', () => {
+  const React = require('react');
   const { View } = require('react-native');
-  const MockMapView = (props: any) => <View testID="map-view" {...props} />;
+  class MockMapView extends React.Component {
+    animateToRegion() {}
+    render() { return <View testID="map-view" {...this.props} />; }
+  }
   const MockMarker = (props: any) => <View testID="map-marker" {...props} />;
   const MockCircle = (props: any) => <View testID="map-circle" {...props} />;
   return {
@@ -59,7 +63,12 @@ jest.mock('lucide-react-native', () => {
 
 // Mock the telemetry hook
 jest.mock('../../src/hooks/useTelemetry', () => ({
+  ...jest.requireActual('../../src/hooks/useTelemetry'),
   useTelemetry: jest.fn(),
+}));
+
+jest.mock('../../src/hooks/useTreatments', () => ({
+  useTreatments: jest.fn(() => ({ data: [] })),
 }));
 
 jest.mock('../../src/hooks/useWaypoints', () => ({
@@ -102,6 +111,8 @@ describe('DiagnosticsScreen Phase 5 - Map & Telemetry', () => {
       statusData: { mission_state: 'idle' },
       isLoading: false,
       isError: false,
+      isOnline: true,
+      canTakeManualControl: true,
     });
 
     const { getByText } = render(<DiagnosticsScreen />);
@@ -120,12 +131,29 @@ describe('DiagnosticsScreen Phase 5 - Map & Telemetry', () => {
       isError: true, // Simulating disconnect
     });
 
-    const { queryByText } = render(<DiagnosticsScreen />);
-    const fabLabel = queryByText('Manual Override');
-    if (fabLabel) {
-      const fab = fabLabel.parent?.parent;
-      expect(fab?.props.disabled || fab?.props.accessibilityState?.disabled).toBe(true);
+    const { getByText } = render(<DiagnosticsScreen />);
+    fireEvent.press(getByText(/robot offline/i));
+    const router = require('expo-router').router;
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it('test_no_fake_values: missing readings, battery and position show "--", never placeholder numbers', () => {
+    (useTelemetry as jest.Mock).mockReturnValue({
+      statusData: undefined, isLoading: false, isError: true, isOnline: false, canTakeManualControl: false,
+    });
+    (useWaypoints as jest.Mock).mockReturnValue({
+      data: [{ id: 'wp-1', point_number: 1, treated: false, latitude: 14.0, longitude: 120.0, radius_meters: 2 }],
+    });
+
+    const { queryByText, getAllByText, getByText, getAllByTestId } = render(<DiagnosticsScreen />);
+
+    for (const fake of ['124.5', '5.20', '320', '28.5', '86%', 'GPS: Good', 'Floc: Ready']) {
+      expect(queryByText(fake)).toBeNull();
     }
+    expect(getAllByText('--').length).toBeGreaterThanOrEqual(8);
+    expect(getByText('Vessel position: not reported')).toBeTruthy();
+    // Only the waypoint marker — no robot marker at a made-up location
+    expect(getAllByTestId('map-marker')).toHaveLength(1);
   });
 });
 

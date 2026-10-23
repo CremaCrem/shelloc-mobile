@@ -40,13 +40,30 @@ import { StatusHeader } from '@/components/core/StatusHeader';
 import { StatCard } from '@/components/domain/StatCard';
 import { BuoyancyAlert } from '@/components/domain/BuoyancyAlert';
 import { AdaptiveRemediationBadge } from '@/components/domain/AdaptiveRemediationBadge';
-import { useTelemetry } from '@/hooks/useTelemetry';
+import { useTelemetry, missionLabel } from '@/hooks/useTelemetry';
 import { useWaypoints } from '@/hooks/useWaypoints';
 import { useDispatchRobot } from '@/hooks/useDispatch';
+import { useTreatments } from '@/hooks/useTreatments';
+import type { SensorReading } from '@/types/robot';
+
+type ReadingKey = 'turbidity' | 'ph' | 'tds' | 'temperature';
+
+function readValue(r: SensorReading | null | undefined, key: ReadingKey): number | undefined {
+  if (!r) return undefined;
+  switch (key) {
+    case 'turbidity': return r.turbidity_ntu ?? r.turbidity;
+    case 'ph': return r.ph;
+    case 'tds': return r.tds_ppm ?? r.tds;
+    case 'temperature': return r.temperature;
+  }
+}
 
 export default function DiagnosticsScreen() {
-  const { sensorData, statusData, isLoading, isError } = useTelemetry();
-  const { data: waypointsData } = useWaypoints();
+  const { statusData, isLoading, isOnline, operationMode, canTakeManualControl, refetch } = useTelemetry();
+  const { data: waypointsData, refetch: refetchWaypoints } = useWaypoints();
+  const { data: treatments } = useTreatments();
+  const mapRef = useRef<MapView>(null);
+  const hasCentered = useRef(false);
   const dispatchRobot = useDispatchRobot();
   
   const waypoints = waypointsData || [];
@@ -66,28 +83,59 @@ export default function DiagnosticsScreen() {
     prevMissionState.current = statusData?.mission_state;
   }, [statusData?.mission_state]);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    try {
+      await Promise.all([refetch(), refetchWaypoints()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
+
+  const hasPosition = typeof statusData?.current_lat === 'number' && typeof statusData?.current_lng === 'number';
+
+  // Center the map once on the robot (or the first waypoint) when data first arrives.
+  useEffect(() => {
+    if (hasCentered.current) return;
+    const target = hasPosition
+      ? { latitude: statusData!.current_lat!, longitude: statusData!.current_lng! }
+      : waypointsData?.[0]
+      ? { latitude: waypointsData[0].latitude, longitude: waypointsData[0].longitude }
+      : null;
+    if (target && mapRef.current) {
+      mapRef.current.animateToRegion({ ...target, latitudeDelta: 0.005, longitudeDelta: 0.005 }, 500);
+      hasCentered.current = true;
+    }
+  }, [hasPosition, statusData, waypointsData]);
 
   const selectedWaypoint = waypoints[selectedPointIndex] || null;
 
-  // Helper to extract comparative data
-  const getComparativeData = (key: 'turbidity_ntu' | 'ph' | 'tds_ppm' | 'temperature', baseline: number) => {
-    if (!selectedWaypoint) return { before: baseline, after: baseline, delta: 0 };
-    
-    const before = selectedWaypoint.before_reading?.[key] ?? baseline;
-    const after = selectedWaypoint.after_reading?.[key] ?? before;
-    const delta = before > 0 ? ((after - before) / before) * 100 : 0;
-    
-    return { before, after, delta };
+  // Before/after values for the selected waypoint. Missing readings stay missing ("--").
+  const getComparativeData = (key: ReadingKey, digits: number) => {
+    const before = readValue(selectedWaypoint?.before_reading, key);
+    const after = readValue(selectedWaypoint?.after_reading, key);
+    const delta = before !== undefined && after !== undefined && before > 0
+      ? ((after - before) / before) * 100
+      : undefined;
+    return {
+      before: before === undefined ? '--' : before.toFixed(digits),
+      after: after === undefined ? '--' : after.toFixed(digits),
+      delta,
+      beforeLabel: before === undefined ? 'NO DATA' : 'MEASURED',
+      afterLabel: after === undefined ? (before === undefined ? 'NO DATA' : 'PENDING') : 'MEASURED',
+      afterStatus: (after === undefined ? 'amber' : 'brand') as 'amber' | 'brand',
+    };
   };
 
-  const turbidityData = getComparativeData('turbidity_ntu', 124.5);
-  const phData = getComparativeData('ph', 5.2);
-  const tdsData = getComparativeData('tds_ppm', 320);
-  const temperatureData = getComparativeData('temperature', 28.5);
+  const turbidityData = getComparativeData('turbidity', 1);
+  const phData = getComparativeData('ph', 2);
+  const tdsData = getComparativeData('tds', 0);
+  const temperatureData = getComparativeData('temperature', 1);
+
+  // Extra reagent dose, only if the robot actually logged one for this waypoint.
+  const secondaryReagent = treatments?.find(
+    (t) => t.waypoint_id === selectedWaypoint?.id && t.secondary_treatment_applied
+  )?.secondary_reagent_type ?? null;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -120,11 +168,11 @@ export default function DiagnosticsScreen() {
       {/* Global Status Bar */}
       <StatusHeader
         robotName={statusData?.robot_id || 'SHELLOC-01'}
-        connection={isError ? 'disconnected' : isLoading ? 'connecting' : 'connected'}
-        state={(statusData?.mission_state && statusData.mission_state !== 'idle') ? 'cleaning' : 'idle'}
-        operationMode="autonomous"
-        batteryPercent={statusData?.battery_percent ?? 86}
-        gpsSignal="good"
+        connection={isLoading ? 'connecting' : isOnline ? 'connected' : 'disconnected'}
+        state={missionLabel(statusData?.mission_state)}
+        operationMode={isOnline ? operationMode : undefined}
+        batteryPercent={statusData?.battery_percent ?? '--'}
+        gpsSignal={statusData?.gps_signal}
       />
 
       {/* Active Mission Banner */}
@@ -197,6 +245,7 @@ export default function DiagnosticsScreen() {
             {/* Real Interactive Map Canvas */}
             <View className="h-64 relative overflow-hidden">
               <MapView
+                ref={mapRef}
                 style={StyleSheet.absoluteFill}
                 initialRegion={{
                   latitude: 14.60012,
@@ -216,7 +265,7 @@ export default function DiagnosticsScreen() {
                       {/* 2-Meter Boundary Circle */}
                       <Circle
                         center={{ latitude: wp.latitude, longitude: wp.longitude }}
-                        radius={20}
+                        radius={wp.radius_meters ?? 2}
                         fillColor={isTreated ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)"}
                         strokeColor={isTreated ? "rgba(16, 185, 129, 0.4)" : "rgba(245, 158, 11, 0.4)"}
                         strokeWidth={1}
@@ -255,11 +304,12 @@ export default function DiagnosticsScreen() {
                   );
                 })}
 
-                {/* Robot Current Position — Turtle Marker */}
+                {/* Robot Current Position — Turtle Marker (only when the robot reported one) */}
+                {hasPosition && (
                 <Marker
-                  coordinate={{ 
-                    latitude: statusData?.current_lat ?? 14.59972, 
-                    longitude: statusData?.current_lng ?? 120.98491 
+                  coordinate={{
+                    latitude: statusData!.current_lat!,
+                    longitude: statusData!.current_lng!,
                   }}
                   anchor={{ x: 0.5, y: 0.5 }}
                   zIndex={10}
@@ -289,12 +339,15 @@ export default function DiagnosticsScreen() {
                     </View>
                   </View>
                 </Marker>
+                )}
               </MapView>
 
               {/* Coordinate HUD Readout */}
               <View className="absolute bottom-2 left-3 bg-surface/85 px-2.5 py-1 rounded-lg border border-surfaceBorder" pointerEvents="none">
                 <Typography variant="caption" color="inkMuted" className="font-mono text-[10px]">
-                  Vessel: {(statusData?.current_lat ?? 14.59972).toFixed(5)}° N, {(statusData?.current_lng ?? 120.98491).toFixed(5)}° E
+                  {hasPosition
+                    ? `Vessel: ${statusData!.current_lat!.toFixed(5)}° N, ${statusData!.current_lng!.toFixed(5)}° E`
+                    : 'Vessel position: not reported'}
                 </Typography>
               </View>
             </View>
@@ -302,30 +355,23 @@ export default function DiagnosticsScreen() {
             {/* 2. Status Legend Bar */}
             <View className="p-3 bg-surfaceElevated border-t border-surfaceBorder flex-row items-center flex-wrap gap-3">
               <View className="flex-row items-center">
-                <View className="w-2 h-2 rounded-full bg-leaf mr-1.5" />
+                <View className={`w-2 h-2 rounded-full mr-1.5 ${isOnline && statusData?.gps_signal === 'good' ? 'bg-leaf' : 'bg-amber'}`} />
                 <Typography variant="caption" color="inkMuted" className="text-[11px] font-medium">
-                  GPS: Good
+                  GPS: {isOnline && statusData?.gps_signal ? statusData.gps_signal.toUpperCase() : '--'}
                 </Typography>
               </View>
 
               <View className="flex-row items-center">
                 <View className="w-2 h-2 rounded-full bg-brand mr-1.5" />
                 <Typography variant="caption" color="inkMuted" className="text-[11px] font-medium">
-                  Mode: Auto
+                  Mode: {isOnline && operationMode ? (operationMode === 'autonomous' ? 'Auto' : 'Manual') : '--'}
                 </Typography>
               </View>
 
               <View className="flex-row items-center">
-                <View className="w-2 h-2 rounded-full bg-leaf mr-1.5" />
+                <View className={`w-2 h-2 rounded-full mr-1.5 ${isOnline ? 'bg-leaf' : 'bg-inkSubtle'}`} />
                 <Typography variant="caption" color="inkMuted" className="text-[11px] font-medium">
-                  Battery: {statusData?.battery_percent ?? 86}%
-                </Typography>
-              </View>
-
-              <View className="flex-row items-center">
-                <View className="w-2 h-2 rounded-full bg-leaf mr-1.5" />
-                <Typography variant="caption" color="inkMuted" className="text-[11px] font-medium">
-                  Floc: Ready
+                  Battery: {statusData?.battery_percent !== undefined ? `${statusData.battery_percent}%` : '--'}
                 </Typography>
               </View>
             </View>
@@ -410,9 +456,9 @@ export default function DiagnosticsScreen() {
                   size="md"
                 />
                 <View className="mt-2">
-                  <AdaptiveRemediationBadge 
-                    reagentType="citric_acid" 
-                    isVisible={selectedWaypoint.treated} 
+                  <AdaptiveRemediationBadge
+                    reagentType={secondaryReagent}
+                    isVisible={Boolean(secondaryReagent)}
                   />
                 </View>
               </View>
@@ -428,14 +474,14 @@ export default function DiagnosticsScreen() {
               category="turbidity"
               icon={Droplet}
               comparative={{
-                beforeValue: turbidityData.before.toFixed(1),
-                afterValue: turbidityData.after.toFixed(1),
+                beforeValue: turbidityData.before,
+                afterValue: turbidityData.after,
                 unit: 'NTU',
                 deltaPercent: turbidityData.delta,
-                beforeStatus: 'danger',
-                beforeStatusLabel: 'CRITICAL',
-                afterStatus: selectedWaypoint?.treated ? 'leaf' : 'amber',
-                afterStatusLabel: selectedWaypoint?.treated ? 'OPTIMAL' : 'PENDING',
+                beforeStatus: 'neutral',
+                beforeStatusLabel: turbidityData.beforeLabel,
+                afterStatus: turbidityData.afterStatus,
+                afterStatusLabel: turbidityData.afterLabel,
               }}
             />
 
@@ -446,14 +492,14 @@ export default function DiagnosticsScreen() {
               category="ph"
               icon={FlaskConical}
               comparative={{
-                beforeValue: phData.before.toFixed(2),
-                afterValue: phData.after.toFixed(2),
+                beforeValue: phData.before,
+                afterValue: phData.after,
                 unit: 'pH',
                 deltaPercent: phData.delta,
-                beforeStatus: 'amber',
-                beforeStatusLabel: 'ACIDIC',
-                afterStatus: selectedWaypoint?.treated ? 'leaf' : 'amber',
-                afterStatusLabel: selectedWaypoint?.treated ? 'OPTIMAL' : 'PENDING',
+                beforeStatus: 'neutral',
+                beforeStatusLabel: phData.beforeLabel,
+                afterStatus: phData.afterStatus,
+                afterStatusLabel: phData.afterLabel,
               }}
             />
 
@@ -464,14 +510,14 @@ export default function DiagnosticsScreen() {
               category="tds"
               icon={Waves}
               comparative={{
-                beforeValue: tdsData.before.toFixed(0),
-                afterValue: tdsData.after.toFixed(0),
+                beforeValue: tdsData.before,
+                afterValue: tdsData.after,
                 unit: 'ppm',
                 deltaPercent: tdsData.delta,
-                beforeStatus: 'danger',
-                beforeStatusLabel: 'ELEVATED',
-                afterStatus: selectedWaypoint?.treated ? 'leaf' : 'amber',
-                afterStatusLabel: selectedWaypoint?.treated ? 'OPTIMAL' : 'PENDING',
+                beforeStatus: 'neutral',
+                beforeStatusLabel: tdsData.beforeLabel,
+                afterStatus: tdsData.afterStatus,
+                afterStatusLabel: tdsData.afterLabel,
               }}
             />
 
@@ -482,14 +528,14 @@ export default function DiagnosticsScreen() {
               category="temperature"
               icon={Thermometer}
               comparative={{
-                beforeValue: temperatureData.before.toFixed(1),
-                afterValue: temperatureData.after.toFixed(1),
+                beforeValue: temperatureData.before,
+                afterValue: temperatureData.after,
                 unit: '°C',
                 deltaPercent: temperatureData.delta,
                 beforeStatus: 'neutral',
-                beforeStatusLabel: 'BASELINE',
-                afterStatus: selectedWaypoint?.treated ? 'neutral' : 'amber',
-                afterStatusLabel: selectedWaypoint?.treated ? 'STABLE' : 'PENDING',
+                beforeStatusLabel: temperatureData.beforeLabel,
+                afterStatus: temperatureData.afterStatus,
+                afterStatusLabel: temperatureData.afterLabel,
               }}
             />
           </View>
@@ -538,17 +584,17 @@ export default function DiagnosticsScreen() {
           </View>
 
           {/* 7. Manual Override FAB */}
-          {(!statusData?.mission_state || statusData.mission_state === 'idle' || statusData.mission_state === 'navigating') && (
-            <TouchableOpacity
-              style={[fabStyles.fab, isError && fabStyles.fabDisabled]}
-              onPress={() => router.push('/(modals)/manual-override' as any)}
-              activeOpacity={0.8}
-              disabled={isError}
-            >
-              <Gamepad2 size={22} color={isError ? "#94A3B8" : "#fff"} />
-              <Text style={[fabStyles.fabLabel, isError && { color: "#94A3B8" }]}>Manual Override</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={[fabStyles.fab, !canTakeManualControl && fabStyles.fabDisabled]}
+            onPress={() => router.push('/(modals)/manual-override' as any)}
+            activeOpacity={0.8}
+            disabled={!canTakeManualControl}
+          >
+            <Gamepad2 size={22} color={canTakeManualControl ? "#fff" : "#94A3B8"} />
+            <Text style={[fabStyles.fabLabel, !canTakeManualControl && { color: "#94A3B8" }]}>
+              {canTakeManualControl ? 'Manual Override' : isOnline ? 'Manual Override (busy)' : 'Manual Override (robot offline)'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

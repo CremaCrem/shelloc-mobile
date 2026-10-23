@@ -6,24 +6,23 @@ import { Typography } from './Typography';
 import { Badge, type BadgeStatus } from './Badge';
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting';
-export type RobotState = 'idle' | 'cleaning' | 'navigating' | 'treating' | 'error';
-
 interface StatusHeaderProps {
   robotName?: string;
   connection: ConnectionStatus;
-  state?: RobotState;
+  state?: string;
   operationMode?: 'autonomous' | 'manual';
   batteryPercent?: number | string;
   gpsSignal?: 'good' | 'weak' | 'none';
 }
 
+// Every value comes from the robot; nothing is shown as real when it wasn't reported.
 export function StatusHeader({
   robotName = 'SHELLOC-01',
-  connection = 'connected',
+  connection = 'disconnected',
   state = 'idle',
-  operationMode = 'autonomous',
-  batteryPercent = 85,
-  gpsSignal = 'good',
+  operationMode,
+  batteryPercent = '--',
+  gpsSignal,
 }: StatusHeaderProps) {
   let connectionBadgeStatus: BadgeStatus = 'neutral';
   let connectionLabel = 'Offline';
@@ -74,12 +73,14 @@ export function StatusHeader({
               <Typography variant="h3" color="ink" className="mr-1 flex-shrink">
                 {robotName}
               </Typography>
-              <Badge
-                label={operationMode === 'autonomous' ? 'AUTO' : 'MANUAL'}
-                status={operationMode === 'autonomous' ? 'leaf' : 'amber'}
-                size="sm"
-                showDot={false}
-              />
+              {operationMode && (
+                <Badge
+                  label={operationMode === 'autonomous' ? 'AUTO' : 'MANUAL'}
+                  status={operationMode === 'autonomous' ? 'leaf' : 'amber'}
+                  size="sm"
+                  showDot={false}
+                />
+              )}
             </View>
             <View className="flex-row items-center mt-1">
               <View
@@ -94,7 +95,7 @@ export function StatusHeader({
               <Typography variant="caption" color="inkMuted" className="capitalize">
                 {connection === 'connected' ? `State: ${state}` : connectionLabel}
               </Typography>
-              {gpsSignal && (
+              {connection === 'connected' && gpsSignal && (
                 <>
                   <Typography variant="caption" color="inkSubtle" className="mx-1.5">
                     •

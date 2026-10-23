@@ -6,7 +6,6 @@ import {
   Settings,
   Info,
   Cpu,
-  CheckCircle2,
   Clock,
   ShieldCheck,
   Users,
@@ -16,47 +15,99 @@ import {
   Zap,
   ChevronRight,
   Droplet,
+  FlaskConical,
+  Waves,
+  Thermometer,
 } from 'lucide-react-native';
 import { Typography } from '@/components/core/Typography';
 import { Card } from '@/components/core/Card';
-import { Badge } from '@/components/core/Badge';
+import { Badge, type BadgeStatus } from '@/components/core/Badge';
 import { Button } from '@/components/core/Button';
-import { StatusHeader, type ConnectionStatus, type RobotState } from '@/components/core/StatusHeader';
+import { StatusHeader, type ConnectionStatus } from '@/components/core/StatusHeader';
 import { ProgressRing } from '@/components/domain/ProgressRing';
 import { CountdownTimer } from '@/components/domain/CountdownTimer';
 import { ReagentGauge } from '@/components/domain/ReagentGauge';
-import { useTelemetry } from '@/hooks/useTelemetry';
-import { useAppStore } from '@/store/useAppStore';
+import { StatCard } from '@/components/domain/StatCard';
+import { useTelemetry, formatAgo, missionLabel } from '@/hooks/useTelemetry';
+import { useWaypoints } from '@/hooks/useWaypoints';
+import type { SensorQualityStatus, SensorReading } from '@/types/robot';
+
+const QUALITY_BADGE: Record<SensorQualityStatus, { status: BadgeStatus; label: string }> = {
+  good: { status: 'leaf', label: 'GOOD' },
+  borderline: { status: 'amber', label: 'BORDERLINE' },
+  critical: { status: 'danger', label: 'CRITICAL' },
+  no_data: { status: 'neutral', label: 'NO DATA' },
+};
+
+type ReadingKey = 'turbidity' | 'ph' | 'tds' | 'temperature';
+
+function readValue(r: SensorReading | undefined, key: ReadingKey): number | undefined {
+  if (!r) return undefined;
+  switch (key) {
+    case 'turbidity': return r.turbidity_ntu ?? r.turbidity;
+    case 'ph': return r.ph;
+    case 'tds': return r.tds_ppm ?? r.tds;
+    case 'temperature': return r.temperature;
+  }
+}
 
 export default function DashboardScreen() {
-  const { sensorData, statusData, isLoading, isError } = useTelemetry();
-  const isDemoMode = useAppStore((state) => state.isDemoMode);
-  const [operationMode, setOperationMode] = useState<'autonomous' | 'manual'>('autonomous');
+  const {
+    statusData,
+    readings,
+    latestReading,
+    readingAgeSec,
+    lastSeenSec,
+    isOnline,
+    isLoading,
+    operationMode,
+    canTakeManualControl,
+    refetch,
+  } = useTelemetry();
+  const { data: waypointsData, refetch: refetchWaypoints } = useWaypoints();
   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    try {
+      await Promise.all([refetch(), refetchWaypoints()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   let connectionState: ConnectionStatus = 'disconnected';
   if (isLoading) connectionState = 'connecting';
-  else if (!isError && statusData) connectionState = 'connected';
+  else if (isOnline) connectionState = 'connected';
 
-  const robotState: RobotState = statusData?.is_active
-    ? statusData.current_action?.toLowerCase().includes('error')
-      ? 'error'
-      : 'cleaning'
-    : 'idle';
+  const battery = statusData?.battery_percent ?? statusData?.battery_level ?? '--';
 
-  const battery = statusData?.battery_percent ?? statusData?.battery_level ?? (isDemoMode && connectionState === 'connected' ? 86 : '--');
-  const pointsTreated = statusData?.points_treated_today ?? (isDemoMode && connectionState === 'connected' ? 4 : '--');
-  const totalWaypoints = 6;
-  const pointsProgress = pointsTreated === '--' ? 0 : (pointsTreated as number) / totalWaypoints;
+  const waypoints = waypointsData ?? [];
+  const totalWaypoints = waypoints.length;
+  const pointsTreated = waypoints.filter((wp) => wp.treated).length;
+  const pointsProgress = totalWaypoints === 0 ? 0 : pointsTreated / totalWaypoints;
 
-  const toggleMode = () => {
-    setOperationMode((prev) => (prev === 'autonomous' ? 'manual' : 'autonomous'));
+  // History for the mini trend lines: oldest → newest.
+  const history = (key: ReadingKey) =>
+    [...readings].reverse().map((r) => readValue(r, key)).filter((v): v is number => typeof v === 'number');
+
+  const readingPoint = waypoints.find((wp) => wp.id === latestReading?.waypoint_id);
+  const readingContext = latestReading
+    ? [
+        formatAgo(readingAgeSec),
+        readingPoint ? `Point ${readingPoint.point_number}` : null,
+        latestReading.phase ? `${latestReading.phase} treatment` : null,
+      ].filter(Boolean).join(' · ')
+    : 'No readings received from the robot yet';
+  const quality = latestReading?.status ? QUALITY_BADGE[latestReading.status] : undefined;
+
+  const metric = (key: ReadingKey, digits: number) => {
+    const v = readValue(latestReading, key);
+    return v === undefined ? undefined : v.toFixed(digits);
   };
+
+  const healthLabel = statusData?.overall_status ? missionLabel(statusData.overall_status) : 'Unknown';
+  const healthy = statusData?.overall_status === 'operational';
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -90,10 +141,10 @@ export default function DashboardScreen() {
       <StatusHeader
         robotName={statusData?.robot_id || 'SHELLOC-01'}
         connection={connectionState}
-        state={robotState}
-        operationMode={operationMode}
+        state={missionLabel(statusData?.mission_state)}
+        operationMode={isOnline ? operationMode : undefined}
         batteryPercent={battery}
-        gpsSignal={statusData?.gps_signal || 'good'}
+        gpsSignal={statusData?.gps_signal}
       />
 
       {/* Main Bento Grid Content */}
@@ -105,7 +156,7 @@ export default function DashboardScreen() {
         }
       >
         <View className="space-y-4 gap-4">
-          
+
           {/* 1. About Card */}
           <Card className="p-5 border border-surfaceBorder bg-surface">
             <View className="flex-row items-start justify-between mb-3">
@@ -135,7 +186,7 @@ export default function DashboardScreen() {
               <View className="flex-row items-center flex-shrink-0">
                 <Zap size={14} color="#10B981" />
                 <Typography variant="caption" color="inkSubtle" className="ml-1 font-medium">
-                  Bio-Flocculation Active
+                  Bio-Flocculation
                 </Typography>
               </View>
               <View className="flex-row items-center flex-shrink-0">
@@ -147,11 +198,11 @@ export default function DashboardScreen() {
             </View>
           </Card>
 
-          {/* 2-Column Bento Grid Row 1: Operation & Points Today */}
+          {/* 2-Column Bento Grid Row 1: Operation & Points */}
           <View className="flex-row gap-4">
-            {/* Operation Card */}
+            {/* Operation Card — shows the robot's real mode; tap opens the joystick */}
             <Card
-              onPress={toggleMode}
+              onPress={canTakeManualControl ? () => router.push('/(modals)/manual-override' as any) : undefined}
               className="flex-1 p-5 border border-surfaceBorder justify-between"
             >
               <View>
@@ -159,37 +210,39 @@ export default function DashboardScreen() {
                   <View className="p-2 rounded-xl bg-leafMuted border" style={{ borderColor: 'rgba(16, 185, 129, 0.3)' }}>
                     <Cpu size={20} color="#10B981" />
                   </View>
-                  <Badge
-                    label={operationMode === 'autonomous' ? 'AUTO' : 'MANUAL'}
-                    status={operationMode === 'autonomous' ? 'leaf' : 'amber'}
-                    size="sm"
-                    showDot={false}
-                  />
+                  {isOnline && operationMode && (
+                    <Badge
+                      label={operationMode === 'autonomous' ? 'AUTO' : 'MANUAL'}
+                      status={operationMode === 'autonomous' ? 'leaf' : 'amber'}
+                      size="sm"
+                      showDot={false}
+                    />
+                  )}
                 </View>
                 <Typography variant="caption" color="inkMuted" className="uppercase font-semibold tracking-wider">
                   Operation
                 </Typography>
                 <Typography variant="h3" color="ink" className="mt-1 font-bold">
-                  {operationMode === 'autonomous' ? 'Autonomous' : 'Manual Mode'}
+                  {!isOnline ? 'Unknown' : operationMode === 'manual' ? 'Manual Mode' : operationMode === 'autonomous' ? 'Autonomous' : 'Unknown'}
                 </Typography>
-                <Typography variant="caption" color="inkSubtle" className="mt-1">
-                  {operationMode === 'autonomous' ? 'Self-navigating GPS route' : 'Joystick override active'}
+                <Typography variant="caption" color="inkSubtle" className="mt-1 capitalize">
+                  {isOnline ? missionLabel(statusData?.mission_state) : 'Robot offline'}
                 </Typography>
               </View>
 
               <View className="mt-4 pt-3 border-t border-surfaceBorder flex-row items-center justify-between">
-                <Typography variant="caption" color="brand" className="font-semibold text-[11px]">
-                  Tap to Switch
+                <Typography variant="caption" color={canTakeManualControl ? 'brand' : 'inkSubtle'} className="font-semibold text-[11px]">
+                  {canTakeManualControl ? 'Tap for Manual Control' : isOnline ? 'Busy — treating water' : 'Waiting for robot'}
                 </Typography>
-                <ChevronRight size={14} color="#00F2FE" />
+                {canTakeManualControl && <ChevronRight size={14} color="#00F2FE" />}
               </View>
             </Card>
 
-            {/* Points Today Card */}
+            {/* Points Treated Card */}
             <Card className="flex-1 p-5 border border-surfaceBorder justify-between items-center">
               <View className="w-full flex-row items-center justify-between mb-2">
                 <Typography variant="caption" color="inkMuted" className="uppercase font-semibold tracking-wider">
-                  Points Today
+                  Points Treated
                 </Typography>
                 <Badge label="MISSION" status="neutral" size="sm" showDot={false} />
               </View>
@@ -213,12 +266,31 @@ export default function DashboardScreen() {
               </View>
 
               <Typography variant="caption" color="inkSubtle" className="text-center mt-1">
-                {typeof pointsTreated === 'number' ? totalWaypoints - pointsTreated : '--'} waypoints remaining
+                {totalWaypoints === 0 ? 'No waypoints set' : `${totalWaypoints - pointsTreated} waypoints remaining`}
               </Typography>
             </Card>
           </View>
 
-          {/* 2-Column Bento Grid Row 2: Last Sync & App Readiness */}
+          {/* Live Water Quality — latest reading the robot sent */}
+          <View>
+            <View className="flex-row items-center justify-between mb-1">
+              <Typography variant="h3" color="ink">
+                Live Water Quality
+              </Typography>
+              {quality && <Badge label={quality.label} status={quality.status} size="sm" showDot={false} />}
+            </View>
+            <Typography variant="caption" color="inkMuted" className="mb-3 capitalize">
+              {readingContext}
+            </Typography>
+            <View className="flex-row flex-wrap gap-4">
+              <StatCard title="Turbidity" category="turbidity" icon={Droplet} value={metric('turbidity', 1)} unit="NTU" historyData={history('turbidity')} />
+              <StatCard title="pH" category="ph" icon={FlaskConical} value={metric('ph', 2)} unit="pH" historyData={history('ph')} />
+              <StatCard title="TDS" category="tds" icon={Waves} value={metric('tds', 0)} unit="ppm" historyData={history('tds')} />
+              <StatCard title="Temperature" category="temperature" icon={Thermometer} value={metric('temperature', 1)} unit="°C" historyData={history('temperature')} />
+            </View>
+          </View>
+
+          {/* 2-Column Bento Grid Row 2: Last Sync & Robot Health */}
           <View className="flex-row gap-4">
             {/* Last Sync Card */}
             <Card className="flex-1 p-5 border border-surfaceBorder justify-between">
@@ -227,50 +299,51 @@ export default function DashboardScreen() {
                   <View className="p-2 rounded-xl bg-brandMuted border" style={{ borderColor: 'rgba(0, 242, 254, 0.3)' }}>
                     <Clock size={20} color="#00F2FE" />
                   </View>
-                  <View className="w-2.5 h-2.5 rounded-full bg-leaf animate-pulse" />
+                  <View className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-leaf' : 'bg-inkSubtle'}`} />
                 </View>
                 <Typography variant="caption" color="inkMuted" className="uppercase font-semibold tracking-wider">
                   Last Sync
                 </Typography>
                 <Typography variant="h3" color="ink" className="mt-1 font-bold">
-                  Just now
+                  {formatAgo(lastSeenSec)}
                 </Typography>
-                <Typography variant="caption" color="leaf" className="mt-1 font-medium">
-                  • 12 Satellites Locked
+                <Typography variant="caption" color={statusData?.gps_signal === 'good' ? 'leaf' : 'amber'} className="mt-1 font-medium">
+                  • GPS: {statusData?.gps_signal ? statusData.gps_signal.toUpperCase() : 'UNKNOWN'}
                 </Typography>
               </View>
 
               <View className="mt-4 pt-3 border-t border-surfaceBorder">
-                <Typography variant="caption" color="inkSubtle" className="text-[11px]">
-                  Heartbeat: 5.0s interval
+                <Typography variant="caption" color={isOnline ? 'leaf' : 'inkSubtle'} className="text-[11px] font-semibold">
+                  {isOnline ? 'Robot online' : 'Robot offline'}
                 </Typography>
               </View>
             </Card>
 
-            {/* App Readiness Card */}
+            {/* Robot Health Card — computed by the server from battery & GPS */}
             <Card className="flex-1 p-5 border border-surfaceBorder justify-between">
               <View>
                 <View className="flex-row items-center justify-between mb-3">
                   <View className="p-2 rounded-xl bg-leafMuted border" style={{ borderColor: 'rgba(16, 185, 129, 0.3)' }}>
                     <ShieldCheck size={20} color="#10B981" />
                   </View>
-                  <Badge label="READY" status="leaf" size="sm" showDot={false} />
+                  {statusData?.overall_status && (
+                    <Badge label={healthy ? 'OK' : 'CHECK'} status={healthy ? 'leaf' : 'amber'} size="sm" showDot={false} />
+                  )}
                 </View>
                 <Typography variant="caption" color="inkMuted" className="uppercase font-semibold tracking-wider">
-                  App Readiness
+                  Robot Health
                 </Typography>
-                <Typography variant="h3" color="ink" className="mt-1 font-bold">
-                  Operational
+                <Typography variant="h3" color="ink" className="mt-1 font-bold capitalize">
+                  {healthLabel}
                 </Typography>
                 <Typography variant="caption" color="inkSubtle" className="mt-1">
-                  All systems calibrated
+                  Battery: {battery}{typeof battery === 'number' ? '%' : ''}
                 </Typography>
               </View>
 
-              <View className="mt-4 pt-3 border-t border-surfaceBorder flex-row items-center">
-                <CheckCircle2 size={12} color="#10B981" />
-                <Typography variant="caption" color="leaf" className="ml-1 text-[11px] font-semibold">
-                  100% Sensors Online
+              <View className="mt-4 pt-3 border-t border-surfaceBorder">
+                <Typography variant="caption" color="inkSubtle" className="text-[11px]">
+                  Based on last report
                 </Typography>
               </View>
             </Card>
@@ -278,9 +351,9 @@ export default function DashboardScreen() {
 
           {/* Reagent Gauge */}
           <ReagentGauge
-            moringaPercent={statusData?.flocculant_tank_percent ?? 85}
-            citricAcidPercent={statusData?.citric_acid_tank_percent ?? 92}
-            biocharStatus={statusData?.biochar_health_status ?? 'optimal'}
+            moringaPercent={statusData?.flocculant_tank_percent}
+            citricAcidPercent={statusData?.citric_acid_tank_percent}
+            biocharStatus={statusData?.biochar_health_status}
           />
 
           {/* Incubation Countdown */}
