@@ -14,7 +14,8 @@ export function useManualControl() {
   const activeRobotId = useAppStore((state) => state.activeRobotId);
   const wsRef = useRef<WebSocket | null>(null);
   const lastSendTimeRef = useRef<number>(0);
-  const [isConnected, setIsConnected] = useState(true); // Assume connected until error/close
+  const lastValueRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     if (!activeRobotId) return;
@@ -40,13 +41,25 @@ export function useManualControl() {
 
     wsRef.current = ws;
 
+    // The robot stops its motors if it hears nothing for 500ms, and a stick held
+    // still sends no new gesture events — so repeat the last non-zero position.
+    const keepAlive = setInterval(() => {
+      const { x, y } = lastValueRef.current;
+      if ((x !== 0 || y !== 0) && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ event: 'manual_control', data: { x, y } }));
+        lastSendTimeRef.current = Date.now();
+      }
+    }, 200);
+
     return () => {
+      clearInterval(keepAlive);
       ws.close();
       wsRef.current = null;
     };
   }, [activeRobotId]);
 
   const sendJoystickCoordinates = useCallback((x: number, y: number) => {
+    lastValueRef.current = { x, y };
     const now = Date.now();
     // Throttle to ~10Hz (100ms), but (0,0) stop command instantly bypasses throttle
     if (now - lastSendTimeRef.current < 100 && (x !== 0 || y !== 0)) {
@@ -65,6 +78,7 @@ export function useManualControl() {
   }, []);
 
   const exitManualMode = useCallback(() => {
+    lastValueRef.current = { x: 0, y: 0 };
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(
         JSON.stringify({
